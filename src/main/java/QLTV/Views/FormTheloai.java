@@ -4,28 +4,21 @@
  */
 package QLTV.Views;
 
+
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-
-
 /**
  *
  * @author dinhd
  */
-public class FormSach extends JPanel{
+public class FormTheloai extends JPanel{
     private JTextField txtSearch = new JTextField();
     private JButton btnSearch = new JButton("Tìm");
 
-
-    private JTextField txtMaSach = new JTextField();
-    private JTextField txtTenSach = new JTextField();
-    private JTextField txtTacGia = new JTextField();
-    private JTextField txtTheLoai = new JTextField();
-    private JTextField txtNXB = new JTextField();
-    private JTextField txtNamXB = new JTextField();
-    private JTextField txtSoLuong = new JTextField();
+    private JTextField txtMaTL = new JTextField();
+    private JTextField txtTenTL = new JTextField();
 
     private JButton btnThem = new JButton("Thêm");
     private JButton btnSua = new JButton("Sửa");
@@ -35,10 +28,10 @@ public class FormSach extends JPanel{
     private JButton btnXuatFile = new JButton("Xuất file (CSV)");
 
 
-    private JTable tblSach;
+    private JTable tblTheLoai;
     private DefaultTableModel model;
 
-    public FormSach() {
+    public FormTheloai() {
         setLayout(new BorderLayout());
         setBackground(new Color(235, 242, 250));
         setBorder(new EmptyBorder(12, 12, 12, 12));
@@ -47,12 +40,13 @@ public class FormSach extends JPanel{
         add(createBody(), BorderLayout.CENTER);
     }
 
+    // ===== HEADER =====
     private JComponent createHeader() {
         JPanel header = new JPanel(new BorderLayout(10, 10));
         header.setOpaque(false);
         header.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        JLabel title = new JLabel("QUẢN LÝ SÁCH");
+        JLabel title = new JLabel("QUẢN LÝ THỂ LOẠI");
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
         title.setForeground(new Color(20, 40, 70));
 
@@ -77,19 +71,20 @@ public class FormSach extends JPanel{
         header.add(searchBox, BorderLayout.EAST);
 
         return header;
-}
+    }
 
+    // ===== BODY =====
     private JComponent createBody() {
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setOpaque(false);
 
         body.add(createFormCard(), BorderLayout.WEST);
-
         body.add(createTableCard(), BorderLayout.CENTER);
 
         return body;
     }
 
+    // ===== FORM CARD =====
     private JComponent createFormCard() {
         JPanel card = new RoundedPanel(18);
         card.setBackground(Color.WHITE);
@@ -97,7 +92,7 @@ public class FormSach extends JPanel{
         card.setPreferredSize(new Dimension(360, 0));
         card.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        JLabel lb = new JLabel("Thông tin sách");
+        JLabel lb = new JLabel("Thông tin thể loại");
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
@@ -110,20 +105,8 @@ public class FormSach extends JPanel{
         gbc.weightx = 1;
 
         int r = 0;
-        r = addRow(form, gbc, r, "Mã sách", txtMaSach);
-        r = addRow(form, gbc, r, "Tên sách", txtTenSach);
-        r = addRow(form, gbc, r, "Tác giả", txtTacGia);
-        r = addRow(form, gbc, r, "Thể loại", txtTheLoai);
-        r = addRow(form, gbc, r, "Nhà xuất bản", txtNXB);
-        r = addRow(form, gbc, r, "Năm XB", txtNamXB);
-        r = addRow(form, gbc, r, "Số lượng", txtSoLuong);
-
-        JScrollPane spForm = new JScrollPane(form);
-        spForm.setBorder(null);
-        spForm.getViewport().setOpaque(false);
-        spForm.setOpaque(false);
-        spForm.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        spForm.getVerticalScrollBar().setUnitIncrement(16); 
+        r = addRow(form, gbc, r, "Mã thể loại", txtMaTL);
+        r = addRow(form, gbc, r, "Tên thể loại", txtTenTL);
 
         JPanel actions = new JPanel(new GridLayout(3, 2, 10, 10));
         actions.setOpaque(false);
@@ -134,14 +117,17 @@ public class FormSach extends JPanel{
         styleDanger(btnXoa);
         styleGhost(btnLamMoi);
         styleAccent(btnNhapFile);
-        styleAccent(btnXuatFile); 
+        styleAccent(btnXuatFile);
+
 
         actions.add(btnThem);
         actions.add(btnSua);
         actions.add(btnXoa);
         actions.add(btnLamMoi);
         actions.add(btnNhapFile);
-        actions.add(btnXuatFile); 
+        actions.add(btnXuatFile);
+
+        actions.add(new JLabel(""));
 
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
@@ -149,19 +135,16 @@ public class FormSach extends JPanel{
         top.add(new JSeparator(), BorderLayout.SOUTH);
 
         card.add(top, BorderLayout.NORTH);
-        card.add(spForm, BorderLayout.CENTER);  
+        card.add(form, BorderLayout.CENTER);
         card.add(actions, BorderLayout.SOUTH);
+        
+        styleInput(txtMaTL);
+        txtMaTL.setEditable(false);
+        txtMaTL.setBackground(new Color(230, 230, 230));
 
-        styleInput(txtMaSach);
-        txtMaSach.setEditable(false);
-        txtMaSach.setBackground(new Color(230, 230, 230));
 
-        styleInput(txtTenSach);
-        styleInput(txtTacGia);
-        styleInput(txtTheLoai);
-        styleInput(txtNXB);
-        styleInput(txtNamXB);
-        styleInput(txtSoLuong);
+        styleInput(txtMaTL);
+        styleInput(txtTenTL);
 
         return card;
     }
@@ -180,30 +163,31 @@ public class FormSach extends JPanel{
         form.add(field, gbc);
 
         return row + 2;
-}
+    }
 
-
+    // ===== TABLE CARD =====
     private JComponent createTableCard() {
         JPanel card = new RoundedPanel(18);
         card.setBackground(Color.WHITE);
         card.setLayout(new BorderLayout());
         card.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        JLabel lb = new JLabel("Danh sách sách");
+        JLabel lb = new JLabel("Danh sách thể loại");
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
-        String[] cols = {"Mã sách", "Tên sách", "Tác giả", "Thể loại", "NXB", "Năm XB", "Số lượng"};
+        String[] cols = {"Mã thể loại", "Tên thể loại"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
-        tblSach = new JTable(model);
-        tblSach.setRowHeight(28);
-        tblSach.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        tblSach.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        tblSach.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        JScrollPane sp = new JScrollPane(tblSach);
+        tblTheLoai = new JTable(model);
+        tblTheLoai.setRowHeight(28);
+        tblTheLoai.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        tblTheLoai.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        tblTheLoai.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane sp = new JScrollPane(tblTheLoai);
         sp.setBorder(BorderFactory.createLineBorder(new Color(220, 230, 240)));
 
         JPanel top = new JPanel(new BorderLayout());
@@ -217,6 +201,7 @@ public class FormSach extends JPanel{
         return card;
     }
 
+    // ===== Styles =====
     private void styleInput(JTextField f) {
         f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         f.setPreferredSize(new Dimension(0, 36));
@@ -267,6 +252,7 @@ public class FormSach extends JPanel{
         b.setPreferredSize(new Dimension(0, 36));
     }
 
+    // Panel bo góc
     static class RoundedPanel extends JPanel {
         private final int radius;
         public RoundedPanel(int radius) { this.radius = radius; setOpaque(false); }
@@ -280,60 +266,36 @@ public class FormSach extends JPanel{
         }
     }
 
+    // ===== Getters/Setters cho Controller =====
     public JButton getBtnThem() { return btnThem; }
     public JButton getBtnSua() { return btnSua; }
     public JButton getBtnXoa() { return btnXoa; }
     public JButton getBtnLamMoi() { return btnLamMoi; }
     public JButton getBtnNhapFile() { return btnNhapFile; }
+    public JButton getBtnSearch() { return btnSearch; }
+    public JTextField getTxtSearch() { return txtSearch; }
 
-    public JTable getTblSach() { return tblSach; }
+    public JTable getTblTheLoai() { return tblTheLoai; }
     public DefaultTableModel getModel() { return model; }
 
-    public String getMaSach() { return txtMaSach.getText().trim(); }
-    public String getTenSach() { return txtTenSach.getText().trim(); }
-    public String getTacGia() { return txtTacGia.getText().trim(); }
-    public String getTheLoai() { return txtTheLoai.getText().trim(); }
-    public String getNXB() { return txtNXB.getText().trim(); }
-    public String getNamXB() { return txtNamXB.getText().trim(); }
-    public String getSoLuong() { return txtSoLuong.getText().trim(); }
-    
-    
-    public void setMaSach(String ma) {
-        txtMaSach.setText(ma);
-    }
+    public String getMaTL() { return txtMaTL.getText().trim(); }
+    public String getTenTL() { return txtTenTL.getText().trim(); }
 
+    public void setForm(String ma, String ten) {
+        txtMaTL.setText(ma);
+        txtTenTL.setText(ten);
+    }
 
     public void clearForm() {
-        txtMaSach.setText("");
-        txtTenSach.setText("");
-        txtTacGia.setText("");
-        txtTheLoai.setText("");
-        txtNXB.setText("");
-        txtNamXB.setText("");
-        txtSoLuong.setText("");
+        txtMaTL.setText("");
+        txtTenTL.setText("");
     }
-    
-    public void setForm(String ma, String ten, String tg, String tl, String nxb, String nam, String sl) {
-        txtMaSach.setText(ma);
-        txtTenSach.setText(ten);
-        txtTacGia.setText(tg);
-        txtTheLoai.setText(tl);
-        txtNXB.setText(nxb);
-        txtNamXB.setText(nam);
-        txtSoLuong.setText(sl);
-    }
-
-    
-    public JTextField getTxtSearch() {
-    return txtSearch;
-    }
-
-    public JButton getBtnSearch() {
-        return btnSearch;
-    }
-    
     public JButton getBtnXuatFile() {
         return btnXuatFile;
+    }
+    
+    public void setMaTL(String ma) {
+        txtMaTL.setText(ma);
     }
 
 }

@@ -31,32 +31,27 @@ public class SachController {
 
     }
 
-    private void registerEvents() {
-        // CRUD
-        
+    private void registerEvents() {        
         view.getBtnThem().addActionListener(e -> handleInsert());
         view.getBtnSua().addActionListener(e -> handleUpdate());
         view.getBtnXoa().addActionListener(e -> handleDelete());
         view.getBtnLamMoi().addActionListener(e -> view.clearForm());
 
-        // Import CSV -> thêm vào bảng (chỉ demo UI)
         view.getBtnNhapFile().addActionListener(e -> importCSVToTable());
+        view.getBtnXuatFile().addActionListener(e -> exportTableToCSV());
 
-        // Click row -> đổ dữ liệu lên form
+
         view.getTblSach().getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) fillFormFromSelectedRow();
         });
 
-        // Tìm kiếm (nếu bạn đã thêm getter btnSearch + txtSearch)
         try {
             view.getBtnSearch().addActionListener(e -> handleSearch());
             view.getTxtSearch().addActionListener(e -> handleSearch()); // Enter để tìm
         } catch (Exception ignored) {
-            // Nếu bạn chưa thêm getter btnSearch/txtSearch thì thôi
         }
     }
 
-    // ================= LOAD TABLE =================
     private void loadTable() {
         List<Sach> list = dao.findAll();
         fillTable(list);
@@ -69,16 +64,15 @@ public class SachController {
             m.addRow(new Object[]{
                     s.getMasach(),
                     s.getTensach(),
-                    s.getMatg(),     // đang hiển thị mã TG
-                    s.getMatl(),     // mã TL
-                    s.getManxb(),    // mã NXB
+                    s.getMatg(),   
+                    s.getMatl(),  
+                    s.getManxb(), 
                     s.getNamxb(),
                     s.getSoluong() == null ? "" : s.getSoluong()
             });
         }
     }
 
-    // ================= SEARCH =================
     private void handleSearch() {
         String key = view.getTxtSearch().getText().trim();
         if (key.isEmpty()) {
@@ -88,7 +82,6 @@ public class SachController {
         fillTable(dao.search(key));
     }
 
-    // ================= INSERT =================
     private void handleInsert() {
         
         String ma = view.getMaSach();
@@ -109,7 +102,6 @@ public class SachController {
         }
     }
 
-    // ================= UPDATE =================
     private void handleUpdate() {
         Sach s = readFormToSach(true);
         if (s == null) return;
@@ -123,7 +115,6 @@ public class SachController {
         }
     }
 
-    // ================= DELETE =================
     private void handleDelete() {
         int row = view.getTblSach().getSelectedRow();
         String ma = view.getMaSach();
@@ -147,16 +138,11 @@ public class SachController {
         }
     }
 
-    // ================= TABLE -> FORM =================
     private void fillFormFromSelectedRow() {
         int row = view.getTblSach().getSelectedRow();
         if (row < 0) return;
 
         DefaultTableModel m = view.getModel();
-        // đổ vào các ô (FormSach của bạn đang có get... nhưng chưa có set... nên ta set qua clearForm + reflection? => cách dễ là thêm setText methods trong View)
-        // Vì View hiện không có setter/get field trực tiếp, ta dùng cách: tạo thêm hàm setForm(...) trong FormSach.
-        // Nếu bạn chưa có, thì làm cách tối giản: yêu cầu bạn thêm các setter/getter cho textfield.
-        // => Mình đưa luôn cách dùng "public void setForm(...)" ở dưới.
         try {
             view.setForm(
                     String.valueOf(m.getValueAt(row, 0)),
@@ -168,17 +154,15 @@ public class SachController {
                     String.valueOf(m.getValueAt(row, 6))
             );
         } catch (Exception ex) {
-            // Nếu bạn chưa thêm setForm, bạn thêm theo hướng dẫn ở mục 3 bên dưới.
         }
     }
 
-    // ================= FORM -> ENTITY =================
     private Sach readFormToSach(boolean requireMaSach) {
         String ma = view.getMaSach();
         String ten = view.getTenSach();
-        String maTG = view.getTacGia();    // coi là MaTG
-        String maTL = view.getTheLoai();   // coi là MaTL
-        String maNXB = view.getNXB();      // coi là MaNXB
+        String maTG = view.getTacGia();    
+        String maTL = view.getTheLoai(); 
+        String maNXB = view.getNXB(); 
         String namStr = view.getNamXB();
         String slStr = view.getSoLuong();
 
@@ -213,8 +197,6 @@ public class SachController {
             }
         }
 
-        // Entity Sach của bạn có thêm các trường DB: TinhTrang, MoTa, MaNN, MaViTri
-        // Form hiện chưa nhập 4 trường này => gán mặc định để insert không lỗi (tùy DB bạn cho phép null/DEFAULT)
         String tinhTrang = "Tốt";
         String moTa = "";
         String maNN = "NN01";
@@ -223,8 +205,6 @@ public class SachController {
         return new Sach(ma, maTG, maNXB, maTL, ten, nam, soLuong, tinhTrang, moTa, maNN, maViTri);
     }
 
-    // ================= CSV -> TABLE (demo UI) =================
-    // CSV mẫu: MaSach,TenSach,MaTG,MaTL,MaNXB,NamXB,SoLuong
     private void importCSVToTable() {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Chọn file CSV danh sách sách");
@@ -253,6 +233,46 @@ public class SachController {
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(view, "Nhập file thất bại! Kiểm tra định dạng CSV.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    private void exportTableToCSV() {
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Chọn nơi lưu file CSV");
+        int choose = fc.showSaveDialog(view);
+        if (choose != JFileChooser.APPROVE_OPTION) return;
+
+        java.io.File file = fc.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".csv")) {
+            file = new java.io.File(file.getAbsolutePath() + ".csv");
+        }
+
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(file, "UTF-8")) {
+            DefaultTableModel m = view.getModel();
+
+            for (int c = 0; c < m.getColumnCount(); c++) {
+                pw.print(m.getColumnName(c));
+                if (c < m.getColumnCount() - 1) pw.print(",");
+            }
+            pw.println();
+
+            for (int r = 0; r < m.getRowCount(); r++) {
+                for (int c = 0; c < m.getColumnCount(); c++) {
+                    Object val = m.getValueAt(r, c);
+                    String s = (val == null) ? "" : String.valueOf(val);
+                    if (s.contains(",") || s.contains("\"")) {
+                        s = s.replace("\"", "\"\"");
+                        s = "\"" + s + "\"";
+                    }
+                    pw.print(s);
+                    if (c < m.getColumnCount() - 1) pw.print(",");
+                }
+                pw.println();
+            }
+
+            JOptionPane.showMessageDialog(view, "Xuất CSV thành công!");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(view, "Xuất CSV thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
     

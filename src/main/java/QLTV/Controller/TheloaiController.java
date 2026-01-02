@@ -1,0 +1,191 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package QLTV.Controller;
+
+import QLTV.Domain.Theloai;
+import QLTV.Model.TheloaiDAO;
+import QLTV.Views.FormTheloai;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.List;
+/**
+ *
+ * @author dinhd
+ */
+public class TheloaiController {
+    private final FormTheloai view;
+    private final TheloaiDAO dao = new TheloaiDAO();
+
+    public TheloaiController(FormTheloai view) {
+        this.view = view;
+        registerEvents();
+        loadTable();
+
+        view.setMaTL(dao.taoMaTLMoi());
+    }
+
+    private void registerEvents() {
+        view.getBtnThem().addActionListener(e -> handleInsert());
+        view.getBtnSua().addActionListener(e -> handleUpdate());
+        view.getBtnXoa().addActionListener(e -> handleDelete());
+        view.getBtnLamMoi().addActionListener(e -> {
+            view.clearForm();
+            view.setMaTL(dao.taoMaTLMoi());
+        });
+
+        view.getBtnNhapFile().addActionListener(e -> importCSVToTable());
+
+        view.getTblTheLoai().getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) fillFormFromSelectedRow();
+        });
+
+        // tìm kiếm
+        view.getBtnSearch().addActionListener(e -> handleSearch());
+        view.getTxtSearch().addActionListener(e -> handleSearch()); // Enter để tìm
+    }
+
+    private void loadTable() {
+        List<Theloai> list = dao.findAll();
+        fillTable(list);
+    }
+
+    private void fillTable(List<Theloai> list) {
+        DefaultTableModel m = view.getModel();
+        m.setRowCount(0);
+        for (Theloai tl : list) {
+            m.addRow(new Object[]{
+                    tl.getMaTL(),
+                    tl.getTenTL()
+            });
+        }
+    }
+
+    private void handleSearch() {
+        String key = view.getTxtSearch().getText().trim();
+        if (key.isEmpty()) {
+            loadTable();
+            return;
+        }
+        fillTable(dao.search(key));
+    }
+
+    private void handleInsert() {
+        // ma tự tăng
+        String ma = view.getMaTL();
+        if (ma.isEmpty()) ma = dao.taoMaTLMoi();
+
+        String ten = view.getTenTL();
+
+        if (ten.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Tên thể loại không được để trống!");
+            return;
+        }
+
+        Theloai tl = new Theloai(ma, ten);
+
+        int ok = dao.insert(tl);
+        if (ok > 0) {
+            JOptionPane.showMessageDialog(view, "Thêm thể loại thành công!");
+            loadTable();
+            view.clearForm();
+            view.setMaTL(dao.taoMaTLMoi());
+        } else {
+            JOptionPane.showMessageDialog(view, "Thêm thất bại! Có thể trùng Mã thể loại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleUpdate() {
+        String ma = view.getMaTL();
+        String ten = view.getTenTL();
+
+        if (ma.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Chọn 1 dòng để sửa!");
+            return;
+        }
+        if (ten.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Tên thể loại không được để trống!");
+            return;
+        }
+
+        Theloai tl = new Theloai(ma, ten);
+
+        int ok = dao.update(tl);
+        if (ok > 0) {
+            JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
+            loadTable();
+        } else {
+            JOptionPane.showMessageDialog(view, "Cập nhật thất bại! Kiểm tra mã có tồn tại không.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleDelete() {
+        int row = view.getTblTheLoai().getSelectedRow();
+        String ma = view.getMaTL();
+
+        if (ma.isEmpty() && row >= 0) ma = String.valueOf(view.getModel().getValueAt(row, 0));
+        if (ma.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Chọn 1 dòng hoặc có Mã thể loại để xóa.");
+            return;
+        }
+
+        int cf = JOptionPane.showConfirmDialog(view, "Xóa thể loại " + ma + " ?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (cf != JOptionPane.YES_OPTION) return;
+
+        int ok = dao.delete(ma);
+        if (ok > 0) {
+            JOptionPane.showMessageDialog(view, "Xóa thành công!");
+            loadTable();
+            view.clearForm();
+            view.setMaTL(dao.taoMaTLMoi());
+        } else {
+            JOptionPane.showMessageDialog(view, "Xóa thất bại! Thể loại có thể đang được sách tham chiếu.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void fillFormFromSelectedRow() {
+        int row = view.getTblTheLoai().getSelectedRow();
+        if (row < 0) return;
+
+        DefaultTableModel m = view.getModel();
+        view.setForm(
+                String.valueOf(m.getValueAt(row, 0)),
+                String.valueOf(m.getValueAt(row, 1))
+        );
+    }
+
+    private void importCSVToTable() {
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Chọn file CSV thể loại");
+
+        int choose = fc.showOpenDialog(view);
+        if (choose != JFileChooser.APPROVE_OPTION) return;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
+            String line;
+            int count = 0;
+
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] p = line.split(",", -1);
+                if (p.length < 2) continue;
+
+                view.getModel().addRow(new Object[]{
+                        p[0].trim(),
+                        p[1].trim()
+                });
+                count++;
+            }
+
+            JOptionPane.showMessageDialog(view, "Nhập thành công " + count + " dòng (chỉ lên bảng, chưa lưu DB)!", "OK", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(view, "Nhập file thất bại! Kiểm tra CSV.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}

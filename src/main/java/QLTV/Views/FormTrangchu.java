@@ -117,7 +117,16 @@ public class FormTrangchu extends JFrame {
             pnlContent.revalidate();
             pnlContent.repaint();
         });
-        btnTheLoai.addActionListener(e -> showScreen("Quản lý Thể Loại"));
+        btnTheLoai.addActionListener(e -> {
+            pnlContent.removeAll();
+
+            FormTheloai p = new FormTheloai();
+            new QLTV.Controller.TheloaiController(p);
+
+            pnlContent.add(p, BorderLayout.CENTER);
+            pnlContent.revalidate();
+            pnlContent.repaint();
+        });
         btnTacGia.addActionListener(e -> showScreen("Quản lý Tác Giả"));
         btnNXB.addActionListener(e -> showScreen("Quản lý Nhà Xuất Bản"));
         btnDocGia.addActionListener(e -> showScreen("Quản lý Độc Giả"));
