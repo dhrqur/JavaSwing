@@ -86,9 +86,9 @@ public class FormTrangchu extends JFrame {
         JButton btnTacGia = menuButton("Quản lý Tác Giả");
         JButton btnNXB = menuButton("Quản lý Nhà Xuất Bản");
         JButton btnDocGia = menuButton("Quản lý Độc Giả");
-        JButton btnThuThu = menuButton("Quản lý Thủ Thư");
+        JButton btnNhanVien = menuButton("Quản lý Nhân Viên");
         JButton btnMuonTra = menuButton("Quản lý Mượn Trả");
-        JButton btnViTri = menuButton("Quản lý Vị Trí");
+        JButton btnViTri = menuButton("Quản lý Kệ Sách");
         JButton btnKhoa = menuButton("Quản lý Khoa");
         JButton btnLop = menuButton("Quản lý Lớp");
         JButton btnTheThuVien = menuButton("Quản lý Thẻ Thư Viện");
@@ -99,7 +99,7 @@ public class FormTrangchu extends JFrame {
         btnPanel.add(btnTacGia);
         btnPanel.add(btnNXB);
         btnPanel.add(btnDocGia);
-        btnPanel.add(btnThuThu);
+        btnPanel.add(btnNhanVien);
         btnPanel.add(btnMuonTra);
         btnPanel.add(btnViTri);
         btnPanel.add(btnKhoa);
@@ -157,9 +157,27 @@ public class FormTrangchu extends JFrame {
             pnlContent.revalidate();
             pnlContent.repaint();
         });
-        btnThuThu.addActionListener(e -> showScreen("Quản lý Thủ Thư"));
+        btnNhanVien.addActionListener(e -> {
+            pnlContent.removeAll();
+
+            FormNhanVien p = new FormNhanVien();
+            new QLTV.Controller.NhanVienController(p);
+
+            pnlContent.add(p, BorderLayout.CENTER);
+            pnlContent.revalidate();
+            pnlContent.repaint();
+        });
         btnMuonTra.addActionListener(e -> showScreen("Quản lý Mượn Trả"));
-        btnViTri.addActionListener(e -> showScreen("Quản lý Vị Trí"));
+        btnViTri.addActionListener(e -> {
+            pnlContent.removeAll();
+
+            FormKeSach p = new FormKeSach();
+            new QLTV.Controller.KeSachController(p);
+
+            pnlContent.add(p, BorderLayout.CENTER);
+            pnlContent.revalidate();
+            pnlContent.repaint();
+        });
         btnKhoa.addActionListener(e -> {
             pnlContent.removeAll();
 
@@ -189,7 +207,16 @@ btnLop.addActionListener(e -> {
     pnlContent.repaint();
 });
       
-        btnTheThuVien.addActionListener(e -> showScreen("Quản lý Thẻ Thư Viện"));
+        btnTheThuVien.addActionListener(e -> {
+            pnlContent.removeAll();
+
+            FormTheThuVien p = new FormTheThuVien();
+            new QLTV.Controller.TheThuVienController(p);
+
+            pnlContent.add(p, BorderLayout.CENTER);
+            pnlContent.revalidate();
+            pnlContent.repaint();
+        });
         btnThongKe.addActionListener(e -> showScreen("Thống Kê"));
 
         JPanel info = new JPanel();

@@ -93,6 +93,10 @@ public class LopController {
             JOptionPane.showMessageDialog(view, "Chọn Mã khoa!");
             return;
         }
+        if (dao.checkTrungTenLop(ten)) {
+            JOptionPane.showMessageDialog(view, "Tên lớp đã tồn tại!");
+            return;
+        }
 
         int ok = dao.insert(new Lop(ma, ten, maKhoa));
         if (ok > 0) {
@@ -114,6 +118,10 @@ public class LopController {
         if (ma.isEmpty()) {
             JOptionPane.showMessageDialog(view, "Chọn 1 dòng để sửa!");
             return;
+        }
+        if (dao.checkTrungTenLopKhacMa(ten, ma)) {
+           JOptionPane.showMessageDialog(view, "Tên lớp đã tồn tại!");
+           return;
         }
         if (ten.isEmpty()) {
             JOptionPane.showMessageDialog(view, "Tên lớp không được để trống!");
@@ -172,36 +180,73 @@ public class LopController {
     }
 
     private void importCSVToTable() {
-        JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Chọn file CSV Lớp");
-        int choose = fc.showOpenDialog(view);
-        if (choose != JFileChooser.APPROVE_OPTION) return;
+    JFileChooser fc = new JFileChooser();
+    if (fc.showOpenDialog(view) != JFileChooser.APPROVE_OPTION) return;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
-            String line;
-            boolean firstLine = true;
-            int count = 0;
-            DefaultTableModel m = view.getModel();
+    List<Lop> dbList = dao.findAll();
 
-            while ((line = br.readLine()) != null) {
-                if (firstLine){
-                firstLine = false;
-                continue;
+    int insert = 0, skip = 0, dup = 0;
+
+    try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
+        String line;
+        boolean header = true;
+
+        while ((line = br.readLine()) != null) {
+            if (header) { header = false; continue; }
+            if (line.trim().isEmpty()) continue;
+
+            String[] p = line.split(",", -1);
+            if (p.length < 3) continue;
+
+            String ma = p[0].trim();
+            String ten = p[1].trim();
+            String maKhoa = p[2].trim();
+
+            if (ma.isEmpty() || ten.isEmpty() || maKhoa.isEmpty()) continue;
+
+            boolean same = false, dupMa = false, dupTen = false;
+
+            for (Lop l : dbList) {
+                if (l.getMaLop().equals(ma)
+                 && l.getTenLop().equals(ten)
+                 && l.getMaKhoa().equals(maKhoa)) {
+                    same = true; break;      
+                }
+                if (l.getMaLop().equals(ma)) dupMa = true;
+                if (l.getTenLop().equals(ten)) dupTen = true;
             }
-                if (line.trim().isEmpty()) continue;
-                String[] p = line.split(",", -1);
-                if (p.length < 3) continue;
 
-                m.addRow(new Object[]{p[0].trim(), p[1].trim(), p[2].trim()});
-                count++;
-            }
+            if (same) { skip++; continue; }
+       
+                if (dupMa || dupTen || dao.checkTrungTenLop(ten)) {
+                    dup++;
+                    continue;
+                }
 
-            JOptionPane.showMessageDialog(view, "Nhập thành công " + count + " dòng (chỉ lên bảng, chưa lưu DB)!");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(view, "Nhập file thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+
+            Lop lop = new Lop(ma, ten, maKhoa);
+            dao.insert(lop);
+            dbList.add(lop);
+            insert++;
         }
+
+        loadTable();
+        view.clearForm();
+        view.setMaLop(dao.taoMaLopMoi());
+
+        JOptionPane.showMessageDialog(
+            view,
+            "Import xong!\n"
+          + "Thêm: " + insert + "\n"
+          + "Bỏ qua: " + skip + "\n"
+          + "Trùng: " + dup
+        );
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(view, "Lỗi nhập file!");
     }
+}
+
 
     private void exportTableToCSV() {
         JFileChooser fc = new JFileChooser();

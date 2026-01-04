@@ -4,29 +4,32 @@
  */
 package QLTV.Controller;
 
-import QLTV.Domain.Khoa;
-import QLTV.Model.KhoaDAO;
-import QLTV.Views.FormKhoa;
+import QLTV.Domain.KeSach;
+import QLTV.Model.KeSachDAO;
+import QLTV.Views.FormKeSach;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+
+
 /**
  *
  * @author Admin
  */
+public class KeSachController {
 
-public class KhoaController {
-    private final FormKhoa view;
-    private final KhoaDAO dao = new KhoaDAO();
+    private final FormKeSach view;
+    private final KeSachDAO dao = new KeSachDAO();
 
-    public KhoaController(FormKhoa view) {
+    public KeSachController(FormKeSach view) {
         this.view = view;
         registerEvents();
         loadTable();
-        view.setMaKhoa(dao.taoMaKhoaMoi());
+        view.setMaViTri(dao.taoMaViTriMoi());
     }
 
     private void registerEvents() {
@@ -36,7 +39,7 @@ public class KhoaController {
 
         view.getBtnLamMoi().addActionListener(e -> {
             view.clearForm();
-            view.setMaKhoa(dao.taoMaKhoaMoi());
+            view.setMaViTri(dao.taoMaViTriMoi());
         });
 
         view.getBtnSearch().addActionListener(e -> handleSearch());
@@ -45,7 +48,7 @@ public class KhoaController {
         view.getBtnNhapFile().addActionListener(e -> importCSVToTable());
         view.getBtnXuatFile().addActionListener(e -> exportTableToCSV());
 
-        view.getTblKhoa().getSelectionModel().addListSelectionListener(e -> {
+        view.getTblKe().getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) fillFormFromSelectedRow();
         });
     }
@@ -54,11 +57,11 @@ public class KhoaController {
         fillTable(dao.findAll());
     }
 
-    private void fillTable(List<Khoa> list) {
+    private void fillTable(List<KeSach> list) {
         DefaultTableModel m = view.getModel();
         m.setRowCount(0);
-        for (Khoa k : list) {
-            m.addRow(new Object[]{k.getMaKhoa(), k.getTenKhoa()});
+        for (KeSach ks : list) {
+            m.addRow(new Object[]{ks.getMaViTri(), ks.getTenKe(), ks.getMoTa()});
         }
     }
 
@@ -68,63 +71,79 @@ public class KhoaController {
         fillTable(dao.search(key));
     }
 
+    private void fillFormFromSelectedRow() {
+        int row = view.getTblKe().getSelectedRow();
+        if (row < 0) return;
+
+        DefaultTableModel m = view.getModel();
+        view.setForm(
+                String.valueOf(m.getValueAt(row, 0)),
+                String.valueOf(m.getValueAt(row, 1)),
+                String.valueOf(m.getValueAt(row, 2))
+        );
+    }
+
     private void handleInsert() {
-        String ma = dao.taoMaKhoaMoi();
-        String ten = view.getTenKhoa();
+        String ma = view.getMaViTri();
+        if (ma.isEmpty()) ma = dao.taoMaViTriMoi();
+
+        String ten = view.getTenKe();
+        String moTa = view.getMoTa();
 
         if (ten.isEmpty()) {
-            JOptionPane.showMessageDialog(view, "Tên khoa không được để trống!");
+            JOptionPane.showMessageDialog(view, "Không được để trống!");
             return;
         }
 
-        // ===== CHECK TRÙNG TÊN KHOA =====
-        if (dao.checkTrungTenKhoa(ten)) {
-            JOptionPane.showMessageDialog(view, "Tên khoa đã tồn tại!");
+        // trùng tên kệ
+        if (dao.existsTenKe(ten, "")) {
+            JOptionPane.showMessageDialog(view, "Trùng tên kệ!");
             return;
         }
 
-        int ok = dao.insert(new Khoa(ma, ten));
+        int ok = dao.insert(new KeSach(ma, ten, moTa));
         if (ok > 0) {
-            JOptionPane.showMessageDialog(view, "Thêm khoa thành công!");
+            JOptionPane.showMessageDialog(view, "Thêm thành công!");
             loadTable();
             view.clearForm();
-            view.setMaKhoa(dao.taoMaKhoaMoi());
+            view.setMaViTri(dao.taoMaViTriMoi());
         } else {
-            JOptionPane.showMessageDialog(view, "Thêm thất bại! Có thể trùng mã.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void handleUpdate() {
-       String ma = view.getMaKhoa();
-       String ten = view.getTenKhoa();
+        String ma = view.getMaViTri();
+        String ten = view.getTenKe();
+        String moTa = view.getMoTa();
 
-       if (ma.isEmpty()) {
-           JOptionPane.showMessageDialog(view, "Chọn 1 dòng để sửa!");
-           return;
-       }
-       if (ten.isEmpty()) {
-           JOptionPane.showMessageDialog(view, "Tên khoa không được để trống!");
-           return;
-       }
+        if (ma.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Chọn 1 dòng để sửa!");
+            return;
+        }
+        if (ten.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Không được để trống!");
+            return;
+        }
 
-       // ===== CHECK TRÙNG TÊN KHOA (TRỪ CHÍNH NÓ) =====
-       if (dao.checkTrungTenKhoaKhacMa(ten, ma)) {
-           JOptionPane.showMessageDialog(view, "Tên khoa đã tồn tại!");
-           return;
-       }
+        // trùng tên kệ (trừ chính nó)
+        if (dao.existsTenKe(ten, ma)) {
+            JOptionPane.showMessageDialog(view, "Trùng tên kệ!");
+            return;
+        }
 
-       int ok = dao.update(new Khoa(ma, ten));
-       if (ok > 0) {
-           JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
-           loadTable();
-       } else {
-           JOptionPane.showMessageDialog(view, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-       }
-   }
+        int ok = dao.update(new KeSach(ma, ten, moTa));
+        if (ok > 0) {
+            JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
+            loadTable();
+        } else {
+            JOptionPane.showMessageDialog(view, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void handleDelete() {
-        int row = view.getTblKhoa().getSelectedRow();
-        String ma = view.getMaKhoa();
+        int row = view.getTblKe().getSelectedRow();
+        String ma = view.getMaViTri();
 
         if (ma.isEmpty() && row >= 0) ma = String.valueOf(view.getModel().getValueAt(row, 0));
         if (ma.isEmpty()) {
@@ -132,7 +151,7 @@ public class KhoaController {
             return;
         }
 
-        int cf = JOptionPane.showConfirmDialog(view, "Xóa khoa " + ma + " ?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        int cf = JOptionPane.showConfirmDialog(view, "Xóa " + ma + " ?", "Xác nhận", JOptionPane.YES_NO_OPTION);
         if (cf != JOptionPane.YES_OPTION) return;
 
         int ok = dao.delete(ma);
@@ -140,31 +159,21 @@ public class KhoaController {
             JOptionPane.showMessageDialog(view, "Xóa thành công!");
             loadTable();
             view.clearForm();
-            view.setMaKhoa(dao.taoMaKhoaMoi());
+            view.setMaViTri(dao.taoMaViTriMoi());
         } else {
-            JOptionPane.showMessageDialog(view, "Xóa thất bại! Khoa có thể đang được lớp tham chiếu.",
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void fillFormFromSelectedRow() {
-        int row = view.getTblKhoa().getSelectedRow();
-        if (row < 0) return;
-
-        DefaultTableModel m = view.getModel();
-        view.setForm(
-                String.valueOf(m.getValueAt(row, 0)),
-                String.valueOf(m.getValueAt(row, 1))
-        );
-    }
-
-    // ===== CSV (2 cột) =====
+    // CSV: (MaViTri),TenKe,MoTa
+    // - Nếu CSV có 3 cột: dùng MaViTri
+    // - Nếu CSV có 2 cột: tự sinh MaViTri
     private void importCSVToTable() {
         JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Chọn file CSV Kệ sách");
         if (fc.showOpenDialog(view) != JFileChooser.APPROVE_OPTION) return;
 
-        List<Khoa> dbList = dao.findAll();
-
+        List<KeSach> dbList = dao.findAll();
         int insert = 0, skip = 0, dup = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
@@ -176,55 +185,68 @@ public class KhoaController {
                 if (line.trim().isEmpty()) continue;
 
                 String[] p = line.split(",", -1);
-                if (p.length < 2) continue;
+                if (p.length < 2) { skip++; continue; }
 
-                String ma = p[0].trim();
-                String ten = p[1].trim();
-                if (ma.isEmpty() || ten.isEmpty()) continue;
+                String ma, ten, moTa;
+
+                // 3 cột: MaViTri, TenKe, MoTa
+                if (p.length >= 3) {
+                    ma = p[0].trim();
+                    ten = p[1].trim();
+                    moTa = p[2].trim();
+                } else {
+                    // 2 cột: TenKe, MoTa (tự sinh mã)
+                    ma = "";
+                    ten = p[0].trim();
+                    moTa = p[1].trim();
+                }
+
+                if (ten.isEmpty()) { skip++; continue; }
+                if (ma.isEmpty()) ma = dao.taoMaViTriMoi(); // tự sinh nếu thiếu
 
                 boolean same = false, dupMa = false, dupTen = false;
 
-                for (Khoa k : dbList) {
-                    if (k.getMaKhoa().equals(ma) && k.getTenKhoa().equals(ten)) {
-                        same = true; break;
+                for (KeSach ks : dbList) {
+                    String dbMoTa = ks.getMoTa() == null ? "" : ks.getMoTa();
+                    String inMoTa = moTa == null ? "" : moTa;
+
+                    if (ks.getMaViTri().equals(ma) && ks.getTenKe().equals(ten) && dbMoTa.equals(inMoTa)) {
+                        same = true; break; // y hệt
                     }
-                    if (k.getMaKhoa().equals(ma)) dupMa = true;
-                    if (k.getTenKhoa().equals(ten)) dupTen = true;
+                    if (ks.getMaViTri().equals(ma)) dupMa = true;
+                    if (ks.getTenKe().equals(ten)) dupTen = true;
                 }
 
                 if (same) { skip++; continue; }
 
-                if (dupMa || dupTen || dao.checkTrungTenKhoa(ten)) {
+                // trùng mã hoặc trùng tên
+                if (dupMa || dupTen || dao.existsMaViTri(ma) || dao.existsTenKe(ten, "")) {
                     dup++;
+                    JOptionPane.showMessageDialog(view, "Dòng bị trùng: " + ma + " - " + ten);
                     continue;
                 }
 
-                dao.insert(new Khoa(ma, ten));
-                dbList.add(new Khoa(ma, ten));
+                KeSach ks = new KeSach(ma, ten, moTa);
+                dao.insert(ks);
+                dbList.add(ks);
                 insert++;
             }
 
             loadTable();
             view.clearForm();
-            view.setMaKhoa(dao.taoMaKhoaMoi());
+            view.setMaViTri(dao.taoMaViTriMoi());
 
-            JOptionPane.showMessageDialog(
-                    view,
-                    "Import xong!\n"
-                  + "Thêm: " + insert + "\n"
-                  + "Bỏ qua: " + skip + "\n"
-                  + "Trùng: " + dup
-            );
+            JOptionPane.showMessageDialog(view,
+                    "Import xong!\nThêm: " + insert + "\nBỏ qua: " + skip + "\nTrùng: " + dup);
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "Lỗi nhập file!");
         }
     }
 
-
     private void exportTableToCSV() {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Chọn nơi lưu file CSV Khoa");
+        fc.setDialogTitle("Chọn nơi lưu CSV Kệ sách");
         int choose = fc.showSaveDialog(view);
         if (choose != JFileChooser.APPROVE_OPTION) return;
 
@@ -264,7 +286,6 @@ public class KhoaController {
 
             JOptionPane.showMessageDialog(view, "Xuất CSV thành công!");
         } catch (Exception ex) {
-            ex.printStackTrace();
             JOptionPane.showMessageDialog(view, "Xuất CSV thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }

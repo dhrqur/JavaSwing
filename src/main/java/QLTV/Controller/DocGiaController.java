@@ -240,40 +240,88 @@ public class DocGiaController {
         return new DocGia(ma, maKhoa, maLop, ten, gt, dc, email, sdt);
     }
 
-    // CSV giữ nguyên như bản trước (8 cột)
     private void importCSVToTable() {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Chọn file CSV Độc Giả");
-        int choose = fc.showOpenDialog(view);
-        if (choose != JFileChooser.APPROVE_OPTION) return;
+        if (fc.showOpenDialog(view) != JFileChooser.APPROVE_OPTION) return;
+
+        List<DocGia> dbList = dao.findAll();
+
+        int insert = 0, skip = 0, dup = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
             String line;
-            boolean firstLine = true;
-            int count = 0;
-            DefaultTableModel m = view.getModel();
+            boolean header = true;
 
             while ((line = br.readLine()) != null) {
+                if (header) { header = false; continue; }
                 if (line.trim().isEmpty()) continue;
-                if (firstLine){
-                    firstLine = false;
-                    continue;
-                }
+
                 String[] p = line.split(",", -1);
                 if (p.length < 8) continue;
 
-                m.addRow(new Object[]{
-                        p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
-                        p[4].trim(), p[5].trim(), p[6].trim(), p[7].trim()
-                });
-                count++;
+                String ma   = p[0].trim();
+                String maK  = p[1].trim();
+                String maL  = p[2].trim();
+                String ten  = p[3].trim();
+                String gt   = p[4].trim();
+                String dc   = p[5].trim();
+                String mail = p[6].trim();
+                String sdt  = p[7].trim();
+
+                if (ma.isEmpty() || maK.isEmpty() || maL.isEmpty()
+                        || ten.isEmpty() || dc.isEmpty()
+                        || mail.isEmpty() || sdt.isEmpty()) {
+                    skip++;
+                    continue;
+                }
+
+                boolean same = false;
+                boolean dupMa = false;
+
+                for (DocGia dg : dbList) {
+                    if (dg.getMaDG().equals(ma)
+                            && dg.getEmail().equals(mail)
+                            && dg.getSdt().equals(sdt)) {
+                        same = true;                 // y hệt
+                        break;
+                    }
+                    if (dg.getMaDG().equals(ma)) {
+                        dupMa = true;                // trùng mã độc giả
+                    }
+                }
+
+                if (same) { skip++; continue; }
+
+                if (dupMa || dao.existsEmail(mail, "") || dao.existsSdt(sdt, "")) {
+                    dup++;
+                    continue;
+                }
+
+                DocGia dg = new DocGia(ma, maK, maL, ten, gt, dc, mail, sdt);
+                dao.insert(dg);
+                dbList.add(dg);
+                insert++;
             }
-            JOptionPane.showMessageDialog(view, "Nhập thành công " + count + " dòng (chỉ lên bảng, chưa lưu DB)!");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(view, "Nhập file thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+
+            loadTable();
+            view.clearForm();
+            initCombos();
+            view.setMaDG(dao.taoMaDGMoi());
+
+            JOptionPane.showMessageDialog(
+                view,
+                "Import xong!\n"
+              + "Thêm: " + insert + "\n"
+              + "Bỏ qua: " + skip + "\n"
+              + "Trùng: " + dup
+            );
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Lỗi nhập file!");
         }
     }
+
 
     private void exportTableToCSV() {
         JFileChooser fc = new JFileChooser();

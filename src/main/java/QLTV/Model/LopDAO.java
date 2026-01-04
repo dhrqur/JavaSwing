@@ -130,4 +130,39 @@ public class LopDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return "L001";
     }
+    
+   public boolean checkTrungTenLop(String tenLop) {
+    String sql = "SELECT 1 FROM lop WHERE TenLop = ? LIMIT 1";
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, tenLop);
+        try (ResultSet rs = ps.executeQuery()) {
+            return rs.next(); // có dòng → trùng
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
 }
+    public boolean checkTrungTenLopKhacMa(String tenLop, String maLop) {
+        String sql = "SELECT 1 FROM lop WHERE TenLop = ? AND MaLop <> ? LIMIT 1";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, tenLop);
+            ps.setString(2, maLop);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+}
+

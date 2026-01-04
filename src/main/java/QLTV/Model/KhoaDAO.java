@@ -124,4 +124,37 @@ public class KhoaDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return "KH001";
     }
+    public boolean checkTrungTenKhoa(String tenKhoa) {
+    String sql = "SELECT 1 FROM khoa WHERE TenKhoa = ? LIMIT 1";
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, tenKhoa);
+        try (ResultSet rs = ps.executeQuery()) {
+            return rs.next(); // có dòng → trùng
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+    public boolean checkTrungTenKhoaKhacMa(String tenKhoa, String maKhoa) {
+        String sql = "SELECT 1 FROM khoa WHERE TenKhoa = ? AND MaKhoa <> ? LIMIT 1";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, tenKhoa);
+            ps.setString(2, maKhoa);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 }
