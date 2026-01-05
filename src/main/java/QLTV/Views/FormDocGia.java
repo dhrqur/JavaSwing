@@ -200,7 +200,7 @@ public class FormDocGia extends JPanel {
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
-        String[] cols = {"Mã DG", "Mã khoa", "Mã lớp", "Tên DG", "Giới tính", "Địa chỉ", "Email", "SĐT"};
+        String[] cols = {"Mã DG", "MaKhoa", "Khoa", "MaLop", "Lớp", "Tên DG", "Giới tính", "Địa chỉ", "Email", "SĐT"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -210,6 +210,9 @@ public class FormDocGia extends JPanel {
         tblDG.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         tblDG.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         tblDG.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        hideColumn(1);
+        hideColumn(3);
 
         JScrollPane sp = new JScrollPane(tblDG);
         sp.setBorder(BorderFactory.createLineBorder(new Color(220, 230, 240)));
@@ -224,7 +227,14 @@ public class FormDocGia extends JPanel {
 
         return card;
     }
-
+    private void hideColumn(int modelIndex) {
+        int viewIndex = tblDG.convertColumnIndexToView(modelIndex);
+        if (viewIndex >= 0) {
+            tblDG.getColumnModel().getColumn(viewIndex).setMinWidth(0);
+            tblDG.getColumnModel().getColumn(viewIndex).setMaxWidth(0);
+            tblDG.getColumnModel().getColumn(viewIndex).setWidth(0);
+        }
+    }
     // ===== styles =====
     private void styleInput(JTextField f) {
         f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -359,10 +369,9 @@ public class FormDocGia extends JPanel {
                         String gioiTinh, String diaChi, String email, String sdt) {
         txtMaDG.setText(maDG);
 
-        // set combobox theo mã nếu có
-        
-        cboKhoa.setSelectedItem(maKhoa);
-        cboLop.setSelectedItem(maLop);
+
+        setSelectedKhoa(maKhoa);
+        setSelectedLop(maLop);
         cboGioiTinh.setSelectedItem(gioiTinh);
 
         txtTenDG.setText(tenDG);

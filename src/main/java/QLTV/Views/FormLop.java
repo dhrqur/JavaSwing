@@ -162,7 +162,7 @@ public class FormLop extends JPanel {
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
-        String[] cols = {"Mã lớp", "Tên lớp", "Mã khoa"};
+        String[] cols = {"Mã lớp", "Tên lớp", "MaKhoa", "Khoa"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -173,6 +173,8 @@ public class FormLop extends JPanel {
         tblLop.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         tblLop.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+        hideColumn(2);
+        
         JScrollPane sp = new JScrollPane(tblLop);
         sp.setBorder(BorderFactory.createLineBorder(new Color(220, 230, 240)));
 
@@ -186,6 +188,16 @@ public class FormLop extends JPanel {
         return card;
     }
 
+    private void hideColumn(int modelIndex) {
+        // modelIndex == index trong model
+        int viewIndex = tblLop.convertColumnIndexToView(modelIndex);
+        if (viewIndex >= 0) {
+            tblLop.getColumnModel().getColumn(viewIndex).setMinWidth(0);
+            tblLop.getColumnModel().getColumn(viewIndex).setMaxWidth(0);
+            tblLop.getColumnModel().getColumn(viewIndex).setWidth(0);
+        }
+    }
+    
     private void styleInput(JTextField f) {
         f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         f.setPreferredSize(new Dimension(0, 36));

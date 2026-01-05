@@ -31,6 +31,9 @@ public class DocGiaController {
     private final KhoaDAO khoaDAO = new KhoaDAO();
     private final LopDAO lopDAO = new LopDAO();
 
+    private List<Khoa> listKhoa;
+    private List<Lop> listLop;
+
     public DocGiaController(FormDocGia view) {
         this.view = view;
         initCombos();
@@ -40,10 +43,13 @@ public class DocGiaController {
     }
 
     private void initCombos() {
-        view.getCboKhoa().removeAllItems();
-        for (Khoa k : khoaDAO.findAll()) {
+                view.getCboKhoa().removeAllItems();
+        listKhoa = khoaDAO.findAll();
+        for (Khoa k : listKhoa) {
             view.getCboKhoa().addItem(k);
         }
+
+        listLop = lopDAO.findAll();
 
         reloadLopBySelectedKhoa();
     }
@@ -82,16 +88,45 @@ public class DocGiaController {
     }
 
     private void loadTable() {
+        listKhoa = khoaDAO.findAll();
+        listLop = lopDAO.findAll();
         fillTable(dao.findAll());
     }
+
+
+    private String tenKhoa(String maKhoa) {
+        if (maKhoa == null) return "";
+        if (listKhoa != null) {
+            for (Khoa k : listKhoa) if (maKhoa.equals(k.getMaKhoa())) return k.getTenKhoa();
+        }
+        return "";
+    }
+
+    private String tenLop(String maLop) {
+        if (maLop == null) return "";
+        if (listLop != null) {
+            for (Lop l : listLop) if (maLop.equals(l.getMaLop())) return l.getTenLop();
+        }
+        return "";
+    }
+
 
     private void fillTable(List<DocGia> list) {
         DefaultTableModel m = view.getModel();
         m.setRowCount(0);
         for (DocGia dg : list) {
+                        String maKhoa = dg.getMaKhoa();
+            String maLop = dg.getMaLop();
+
             m.addRow(new Object[]{
-                dg.getMaDG(), dg.getMaKhoa(), dg.getMaLop(), dg.getTenDG(),
-                dg.getGioiTinh(), dg.getDiaChi(), dg.getEmail(), dg.getSdt()
+                dg.getMaDG(),
+                maKhoa, tenKhoa(maKhoa),
+                maLop,  tenLop(maLop),
+                dg.getTenDG(),
+                dg.getGioiTinh(),
+                dg.getDiaChi(),
+                dg.getEmail(),
+                dg.getSdt()
             });
         }
     }
@@ -204,13 +239,13 @@ public class DocGiaController {
         DefaultTableModel m = view.getModel();
 
         String maDG = String.valueOf(m.getValueAt(row, 0));
-        String maKhoa = String.valueOf(m.getValueAt(row, 1));
-        String maLop = String.valueOf(m.getValueAt(row, 2));
-        String ten = String.valueOf(m.getValueAt(row, 3));
-        String gt = String.valueOf(m.getValueAt(row, 4));
-        String dc = String.valueOf(m.getValueAt(row, 5));
-        String email = String.valueOf(m.getValueAt(row, 6));
-        String sdt = String.valueOf(m.getValueAt(row, 7));
+                String maKhoa = String.valueOf(m.getValueAt(row, 1));
+        String maLop = String.valueOf(m.getValueAt(row, 3));
+        String ten = String.valueOf(m.getValueAt(row, 5));
+        String gt = String.valueOf(m.getValueAt(row, 6));
+        String dc = String.valueOf(m.getValueAt(row, 7));
+        String email = String.valueOf(m.getValueAt(row, 8));
+        String sdt = String.valueOf(m.getValueAt(row, 9));
 
         view.setSelectedKhoa(maKhoa);
 

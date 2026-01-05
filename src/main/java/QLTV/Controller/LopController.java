@@ -27,6 +27,8 @@ public class LopController {
     private final LopDAO dao = new LopDAO();
     private final KhoaDAO khoaDAO = new KhoaDAO();
 
+    private List<Khoa> listKhoa;
+
     public LopController(FormLop view) {
         this.view = view;
         initKhoaCombo();
@@ -37,9 +39,17 @@ public class LopController {
     }
     private void initKhoaCombo() {
         view.getCboKhoa().removeAllItems();
-        for (Khoa k : khoaDAO.findAll()) {
-            view.getCboKhoa().addItem(k);
+        listKhoa = khoaDAO.findAll();
+        for (Khoa k : listKhoa) view.getCboKhoa().addItem(k);
+    }
+    
+    private String tenKhoa(String maKhoa) {
+        if (maKhoa == null) return "";
+        if (listKhoa == null) return "";
+        for (Khoa k : listKhoa) {
+            if (maKhoa.equals(k.getMaKhoa())) return k.getTenKhoa();
         }
+        return "";
     }
 
     private Lop readForm() {
@@ -85,7 +95,12 @@ public class LopController {
         DefaultTableModel m = view.getModel();
         m.setRowCount(0);
         for (Lop lop : list) {
-            m.addRow(new Object[]{lop.getMaLop(), lop.getTenLop(), lop.getMaKhoa()});
+            String maKhoa = lop.getMaKhoa();
+            m.addRow(new Object[]{
+                lop.getMaLop(),
+                lop.getTenLop(),
+                maKhoa, tenKhoa(maKhoa)
+            });
         }
     }
 
