@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package QLTV.Views;
 
 import QLTV.Domain.Khoa;
@@ -10,29 +6,23 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-/**
- *
- * @author Admin
- */
 
 public class FormDocGia extends JPanel {
 
-    // ===== header search =====
     private JTextField txtSearch = new JTextField();
     private JButton btnSearch = new JButton("Tìm");
 
-    // ===== form fields =====
     private JTextField txtMaDG = new JTextField();
 
     private JComboBox<Khoa> cboKhoa = new JComboBox<>();
     private JComboBox<Lop> cboLop = new JComboBox<>();
     private JTextField txtTenDG = new JTextField();
+    private JTextField txtNamSinh = new JTextField(); // NEW
     private JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
     private JTextField txtDiaChi = new JTextField();
     private JTextField txtEmail = new JTextField();
     private JTextField txtSdt = new JTextField();
 
-    // ===== buttons =====
     private JButton btnThem = new JButton("Thêm");
     private JButton btnSua = new JButton("Sửa");
     private JButton btnXoa = new JButton("Xóa");
@@ -40,7 +30,6 @@ public class FormDocGia extends JPanel {
     private JButton btnNhapFile = new JButton("Nhập file (CSV)");
     private JButton btnXuatFile = new JButton("Xuất file (CSV)");
 
-    // ===== table =====
     private JTable tblDG;
     private DefaultTableModel model;
 
@@ -119,12 +108,12 @@ public class FormDocGia extends JPanel {
         r = addRow(form, gbc, r, "Khoa", cboKhoa);
         r = addRow(form, gbc, r, "Lớp", cboLop);
         r = addRow(form, gbc, r, "Tên độc giả", txtTenDG);
+        r = addRow(form, gbc, r, "Năm sinh", txtNamSinh);
         r = addRow(form, gbc, r, "Giới tính", cboGioiTinh);
         r = addRow(form, gbc, r, "Địa chỉ", txtDiaChi);
         r = addRow(form, gbc, r, "Email", txtEmail);
         r = addRow(form, gbc, r, "SĐT", txtSdt);
 
-        // ===== scroll giống FormSach =====
         JScrollPane spForm = new JScrollPane(form);
         spForm.setBorder(null);
         spForm.getViewport().setOpaque(false);
@@ -159,7 +148,6 @@ public class FormDocGia extends JPanel {
         card.add(spForm, BorderLayout.CENTER);
         card.add(actions, BorderLayout.SOUTH);
 
-        // ===== style input =====
         styleInput(txtMaDG);
         txtMaDG.setEditable(false);
         txtMaDG.setBackground(new Color(230, 230, 230));
@@ -167,6 +155,7 @@ public class FormDocGia extends JPanel {
         styleCombo(cboKhoa);
         styleCombo(cboLop);
         styleInput(txtTenDG);
+        styleInput(txtNamSinh); // NEW
         styleCombo(cboGioiTinh);
         styleInput(txtDiaChi);
         styleInput(txtEmail);
@@ -200,7 +189,8 @@ public class FormDocGia extends JPanel {
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
-        String[] cols = {"Mã DG", "Mã khoa", "Mã lớp", "Tên DG", "Giới tính", "Địa chỉ", "Email", "SĐT"};
+        String[] cols = {"Mã DG", "MaKhoa", "MaLop", "Tên DG", "Năm sinh", "Giới tính", "Địa chỉ", "Email", "SĐT"};
+
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -225,7 +215,6 @@ public class FormDocGia extends JPanel {
         return card;
     }
 
-    // ===== styles =====
     private void styleInput(JTextField f) {
         f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         f.setPreferredSize(new Dimension(0, 36));
@@ -300,7 +289,7 @@ public class FormDocGia extends JPanel {
         }
     }
 
-    // ===== getters cho Controller =====
+    // ===== getters =====
     public JTextField getTxtSearch() { return txtSearch; }
     public JButton getBtnSearch() { return btnSearch; }
 
@@ -319,26 +308,27 @@ public class FormDocGia extends JPanel {
     public JComboBox<String> getCboGioiTinh() { return cboGioiTinh; }
 
     public String getMaDG() { return txtMaDG.getText().trim(); }
-    public String getKhoa() { return cboKhoa.getSelectedItem() == null ? "" : cboKhoa.getSelectedItem().toString(); }
-    public String getLop() { return cboLop.getSelectedItem() == null ? "" : cboLop.getSelectedItem().toString(); }
     public String getTenDG() { return txtTenDG.getText().trim(); }
+    public String getNamSinh() { return txtNamSinh.getText().trim(); } 
     public String getGioiTinh() { return cboGioiTinh.getSelectedItem() == null ? "" : cboGioiTinh.getSelectedItem().toString(); }
     public String getDiaChi() { return txtDiaChi.getText().trim(); }
     public String getEmail() { return txtEmail.getText().trim(); }
     public String getSdt() { return txtSdt.getText().trim(); }
-    public Khoa getSelectedKhoa() {return (Khoa) cboKhoa.getSelectedItem();}
-    public Lop getSelectedLop() {return (Lop) cboLop.getSelectedItem();}
-    
+    public Khoa getSelectedKhoa() { return (Khoa) cboKhoa.getSelectedItem(); }
+    public Lop getSelectedLop() { return (Lop) cboLop.getSelectedItem(); }
+
     public void setMaDG(String ma) { txtMaDG.setText(ma); }
 
     public void clearForm() {
         txtMaDG.setText("");
         txtTenDG.setText("");
+        txtNamSinh.setText(""); 
         txtDiaChi.setText("");
         txtEmail.setText("");
         txtSdt.setText("");
         if (cboGioiTinh.getItemCount() > 0) cboGioiTinh.setSelectedIndex(0);
     }
+
     public void setSelectedKhoa(String maKhoa) {
         for (int i = 0; i < cboKhoa.getItemCount(); i++) {
             if (cboKhoa.getItemAt(i).getMaKhoa().equals(maKhoa)) {
@@ -347,6 +337,7 @@ public class FormDocGia extends JPanel {
             }
         }
     }
+
     public void setSelectedLop(String maLop) {
         for (int i = 0; i < cboLop.getItemCount(); i++) {
             if (cboLop.getItemAt(i).getMaLop().equals(maLop)) {
@@ -355,29 +346,17 @@ public class FormDocGia extends JPanel {
             }
         }
     }
+
     public void setForm(String maDG, String maKhoa, String maLop, String tenDG,
-                        String gioiTinh, String diaChi, String email, String sdt) {
+                        String namSinh, String gioiTinh, String diaChi, String email, String sdt) {
         txtMaDG.setText(maDG);
-
-        // set combobox theo mã nếu có
-        
-        cboKhoa.setSelectedItem(maKhoa);
-        cboLop.setSelectedItem(maLop);
-        cboGioiTinh.setSelectedItem(gioiTinh);
-
+        setSelectedKhoa(maKhoa);
+        setSelectedLop(maLop);
         txtTenDG.setText(tenDG);
+        txtNamSinh.setText(namSinh == null ? "" : namSinh); 
+        cboGioiTinh.setSelectedItem(gioiTinh);
         txtDiaChi.setText(diaChi);
         txtEmail.setText(email);
         txtSdt.setText(sdt);
-    }
-    public void setComboboxItems(
-        java.util.List<Khoa> khoas,
-        java.util.List<Lop> lops) {
-
-        cboKhoa.removeAllItems();
-        for (Khoa k : khoas) cboKhoa.addItem(k);
-
-        cboLop.removeAllItems();
-        for (Lop l : lops) cboLop.addItem(l);
     }
 }

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package QLTV.Views;
 
 import java.awt.*;
@@ -9,26 +5,23 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author Admin
- */
 public class FormNhanVien extends JPanel {
 
-    // ===== header search =====
     private JTextField txtSearch = new JTextField();
     private JButton btnSearch = new JButton("Tìm");
 
-    // ===== form fields =====
     private JTextField txtMaNV = new JTextField();
     private JTextField txtTenNV = new JTextField();
     private JTextField txtQueQuan = new JTextField();
     private JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
+    private JTextField txtNamSinh = new JTextField(); // NEW
     private JComboBox<String> cboVaiTro = new JComboBox<>(new String[]{"Quản lý", "Thủ thư"});
     private JTextField txtEmail = new JTextField();
     private JTextField txtSdt = new JTextField();
 
-    // ===== buttons =====
+    private JTextField txtUser = new JTextField();
+    private JPasswordField txtPass = new JPasswordField();
+
     private JButton btnThem = new JButton("Thêm");
     private JButton btnSua = new JButton("Sửa");
     private JButton btnXoa = new JButton("Xóa");
@@ -36,7 +29,6 @@ public class FormNhanVien extends JPanel {
     private JButton btnNhapFile = new JButton("Nhập file (CSV)");
     private JButton btnXuatFile = new JButton("Xuất file (CSV)");
 
-    // ===== table =====
     private JTable tblNV;
     private DefaultTableModel model;
 
@@ -115,9 +107,12 @@ public class FormNhanVien extends JPanel {
         r = addRow(form, gbc, r, "Tên NV", txtTenNV);
         r = addRow(form, gbc, r, "Quê quán", txtQueQuan);
         r = addRow(form, gbc, r, "Giới tính", cboGioiTinh);
+        r = addRow(form, gbc, r, "Năm sinh", txtNamSinh); // NEW
         r = addRow(form, gbc, r, "Vai trò", cboVaiTro);
         r = addRow(form, gbc, r, "Email", txtEmail);
         r = addRow(form, gbc, r, "SĐT", txtSdt);
+        r = addRow(form, gbc, r, "User", txtUser);
+        r = addRow(form, gbc, r, "Pass", txtPass);
 
         JScrollPane spForm = new JScrollPane(form);
         spForm.setBorder(null);
@@ -153,7 +148,6 @@ public class FormNhanVien extends JPanel {
         card.add(spForm, BorderLayout.CENTER);
         card.add(actions, BorderLayout.SOUTH);
 
-        // ===== style input =====
         styleInput(txtMaNV);
         txtMaNV.setEditable(false);
         txtMaNV.setBackground(new Color(230, 230, 230));
@@ -161,9 +155,12 @@ public class FormNhanVien extends JPanel {
         styleInput(txtTenNV);
         styleInput(txtQueQuan);
         styleCombo(cboGioiTinh);
+        styleInput(txtNamSinh); // NEW
         styleCombo(cboVaiTro);
         styleInput(txtEmail);
         styleInput(txtSdt);
+        styleInput(txtUser);
+        stylePassword(txtPass);
 
         return card;
     }
@@ -171,10 +168,8 @@ public class FormNhanVien extends JPanel {
     private int addRow(JPanel form, GridBagConstraints gbc, int row, String text, JComponent field) {
         JLabel lb = new JLabel(text);
         lb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lb.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        gbc.gridx = 0;
-        gbc.gridy = row;
+        gbc.gridx = 0; gbc.gridy = row;
         form.add(lb, gbc);
 
         gbc.gridy = row + 1;
@@ -193,7 +188,7 @@ public class FormNhanVien extends JPanel {
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
-        String[] cols = {"Mã NV", "Tên NV", "Quê quán", "Giới tính", "Vai trò", "Email", "SĐT"};
+        String[] cols = {"Mã NV", "Tên NV", "Quê quán", "Giới tính", "Năm sinh", "Vai trò", "Email", "SĐT", "User"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -220,6 +215,16 @@ public class FormNhanVien extends JPanel {
 
     // ===== styles =====
     private void styleInput(JTextField f) {
+        f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        f.setPreferredSize(new Dimension(0, 36));
+        f.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(210, 220, 230), 1, true),
+                new EmptyBorder(8, 10, 8, 10)
+        ));
+        f.setBackground(new Color(250, 252, 255));
+    }
+
+    private void stylePassword(JPasswordField f) {
         f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         f.setPreferredSize(new Dimension(0, 36));
         f.setBorder(BorderFactory.createCompoundBorder(
@@ -293,7 +298,7 @@ public class FormNhanVien extends JPanel {
         }
     }
 
-    // ===== getters cho Controller =====
+    // ===== getters =====
     public JTextField getTxtSearch() { return txtSearch; }
     public JButton getBtnSearch() { return btnSearch; }
 
@@ -311,9 +316,12 @@ public class FormNhanVien extends JPanel {
     public String getTenNV() { return txtTenNV.getText().trim(); }
     public String getQueQuan() { return txtQueQuan.getText().trim(); }
     public String getGioiTinh() { return cboGioiTinh.getSelectedItem() == null ? "" : cboGioiTinh.getSelectedItem().toString(); }
+    public String getNamSinh() { return txtNamSinh.getText().trim(); } // NEW
     public String getVaiTro() { return cboVaiTro.getSelectedItem() == null ? "" : cboVaiTro.getSelectedItem().toString(); }
     public String getEmail() { return txtEmail.getText().trim(); }
     public String getSdt() { return txtSdt.getText().trim(); }
+    public String getUser() { return txtUser.getText().trim(); }
+    public String getPassRaw() { return new String(txtPass.getPassword()).trim(); }
 
     public void setMaNV(String ma) { txtMaNV.setText(ma); }
 
@@ -321,21 +329,27 @@ public class FormNhanVien extends JPanel {
         txtMaNV.setText("");
         txtTenNV.setText("");
         txtQueQuan.setText("");
+        txtNamSinh.setText("");
         txtEmail.setText("");
         txtSdt.setText("");
+        txtUser.setText("");
+        txtPass.setText("");
         if (cboGioiTinh.getItemCount() > 0) cboGioiTinh.setSelectedIndex(0);
         if (cboVaiTro.getItemCount() > 0) cboVaiTro.setSelectedIndex(0);
     }
 
-    public void setForm(String maNV, String tenNV, String queQuan, String gioiTinh,
-                        String vaiTro, String email, String sdt) {
+    // Pass không fill lại (tránh lộ)
+    public void setForm(String maNV, String tenNV, String queQuan, String gioiTinh, String namSinh,
+                        String vaiTro, String email, String sdt, String user) {
         txtMaNV.setText(maNV);
         txtTenNV.setText(tenNV);
         txtQueQuan.setText(queQuan);
         cboGioiTinh.setSelectedItem(gioiTinh);
+        txtNamSinh.setText(namSinh);
         cboVaiTro.setSelectedItem(vaiTro);
         txtEmail.setText(email);
         txtSdt.setText(sdt);
+        txtUser.setText(user);
+        txtPass.setText("");
     }
 }
-

@@ -1,10 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package QLTV.Controller;
 
-import QLTV.Domain.Dangnhap;
+import QLTV.Domain.NhanVien;
 import QLTV.Model.DangnhapDAO;
 import QLTV.Views.FormDangnhap;
 import QLTV.Views.FormTrangchu;
@@ -37,7 +33,7 @@ public class DangnhapController {
             return;
         }
 
-        Dangnhap tk = dao.findByUserPass(user, pass);
+        NhanVien tk = dao.findByUserPass(user, pass);
         if (tk == null) {
             view.showStatus("Sai tài khoản hoặc mật khẩu.");
             JOptionPane.showMessageDialog(view, "Đăng nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);

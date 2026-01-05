@@ -32,7 +32,7 @@ import javax.swing.table.DefaultTableModel;
 
 /**
  *
- * @author dinhd
+ * @author Admin
  */
 public class FormTacGia extends JPanel {
 

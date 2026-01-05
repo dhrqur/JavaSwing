@@ -135,7 +135,7 @@ public class TacGiaController {
             view.clearForm();
             view.setMaTG(dao.taoMaTGMoi());
         } else {
-            JOptionPane.showMessageDialog(view, "Xóa thất bại! Tác giả có thể đang được sách tham chiếu (FK MaTG).",
+            JOptionPane.showMessageDialog(view, "Xóa thất bại! Tác giả có thể đang được sách tham chiếu.",
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }

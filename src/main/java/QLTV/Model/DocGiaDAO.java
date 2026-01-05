@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package QLTV.Model;
 
 import QLTV.Domain.DocGia;
@@ -13,16 +9,10 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author Admin
- */
-
-
 public class DocGiaDAO {
-    
+
     public List<DocGia> findAll() {
-        String sql = "SELECT MaDG, MaKhoa, MaLop, TenDG, GioiTinh, DiaChi, Email, Sdt FROM docgia";
+        String sql = "SELECT MaDG, MaKhoa, MaLop, TenDG, NamSinh, GioiTinh, DiaChi, Email, Sdt FROM docgia";
         List<DocGia> list = new ArrayList<>();
 
         try (Connection con = DBConnection.getConnection();
@@ -35,10 +25,10 @@ public class DocGiaDAO {
         return list;
     }
 
-
-        public List<String> findAllMaDG() {
+    public List<String> findAllMaDG() {
         String sql = "SELECT MaDG FROM docgia ORDER BY MaDG";
         List<String> list = new ArrayList<>();
+        noted:
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -46,7 +36,6 @@ public class DocGiaDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
-
 
     public List<Khoa> findAllKhoa() {
         String sql = "SELECT MaKhoa, TenKhoa FROM khoa";
@@ -62,11 +51,10 @@ public class DocGiaDAO {
                     rs.getString("TenKhoa")
                 ));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+
     public List<Lop> findAllLop(String maKhoa) {
         String sql = "SELECT MaLop, TenLop, MaKhoa FROM lop WHERE MaKhoa=?";
         List<Lop> list = new ArrayList<>();
@@ -84,26 +72,26 @@ public class DocGiaDAO {
                     ));
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+
     public List<DocGia> search(String keyword) {
-        String sql = "SELECT dg.*, k.TenKhoa, l.TenLop, dg.TenDG, dg.GioiTinh, dg.DiaChi, dg.Email, dg.Sdt " +
-                    "FROM docgia dg " +
-                    "JOIN khoa k ON dg.MaKhoa = k.MaKhoa " +
-                    "JOIN lop l ON dg.MaLop = l.MaLop " +
-                    "WHERE dg.MaDG LIKE ? " +
-                    "OR dg.TenDG LIKE ? " +
-                    "OR dg.Email LIKE ? " +
-                    "OR dg.Sdt LIKE ? " +
-                    "OR dg.GioiTinh LIKE ?"+
-                    "OR dg.DiaChi LIKE ?"+
-                    "OR dg.Email LIKE ?"+
-                    "OR dg.Sdt LIKE ?"+
-                    "OR k.TenKhoa LIKE ? " +
-                    "OR l.TenLop LIKE ?";
+        String sql =
+            "SELECT dg.* " +
+            "FROM docgia dg " +
+            "JOIN khoa k ON dg.MaKhoa = k.MaKhoa " +
+            "JOIN lop  l ON dg.MaLop  = l.MaLop " +
+            "WHERE dg.MaDG LIKE ? " +
+            "OR dg.TenDG LIKE ? " +
+            "OR dg.NamSinh LIKE ? " +
+            "OR dg.Email LIKE ? " +
+            "OR dg.Sdt LIKE ? " +
+            "OR dg.GioiTinh LIKE ? " +
+            "OR dg.DiaChi LIKE ? " +
+            "OR k.TenKhoa LIKE ? " +
+            "OR l.TenLop LIKE ?";
+
         List<DocGia> list = new ArrayList<>();
         String k = "%" + keyword + "%";
 
@@ -119,7 +107,6 @@ public class DocGiaDAO {
             ps.setString(7, k);
             ps.setString(8, k);
             ps.setString(9, k);
-            ps.setString(10, k);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(map(rs));
@@ -128,17 +115,15 @@ public class DocGiaDAO {
 
         return list;
     }
-    
+
     public boolean checkTrungTenDocGia(String tendg) {
         String sql = "SELECT 1 FROM docgia WHERE TenDG = ? LIMIT 1";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-
             ps.setString(1, tendg);
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) { observed:
                 return rs.next();
             }
-
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
@@ -153,13 +138,13 @@ public class DocGiaDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 
     public int insert(DocGia dg) {
-        String sql = "INSERT INTO docgia(MaDG, MaKhoa, MaLop, TenDG, GioiTinh, DiaChi, Email, Sdt) VALUES(?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO docgia(MaDG, MaKhoa, MaLop, TenDG, NamSinh, GioiTinh, DiaChi, Email, Sdt) " +
+                     "VALUES(?,?,?,?,?,?,?,?,?)";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -167,28 +152,30 @@ public class DocGiaDAO {
             ps.setString(2, dg.getMaKhoa());
             ps.setString(3, dg.getMaLop());
             ps.setString(4, dg.getTenDG());
-            ps.setString(5, dg.getGioiTinh());
-            ps.setString(6, dg.getDiaChi());
-            ps.setString(7, dg.getEmail());
-            ps.setString(8, dg.getSdt());
+            ps.setString(5, dg.getNamSinh());
+            ps.setString(6, dg.getGioiTinh());
+            ps.setString(7, dg.getDiaChi());
+            ps.setString(8, dg.getEmail());
+            ps.setString(9, dg.getSdt());
             return ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
         return 0;
     }
 
     public int update(DocGia dg) {
-        String sql = "UPDATE docgia SET MaKhoa=?, MaLop=?, TenDG=?, GioiTinh=?, DiaChi=?, Email=?, Sdt=? WHERE MaDG=?";
+        String sql = "UPDATE docgia SET MaKhoa=?, MaLop=?, TenDG=?, NamSinh=?, GioiTinh=?, DiaChi=?, Email=?, Sdt=? WHERE MaDG=?";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, dg.getMaKhoa());
             ps.setString(2, dg.getMaLop());
             ps.setString(3, dg.getTenDG());
-            ps.setString(4, dg.getGioiTinh());
-            ps.setString(5, dg.getDiaChi());
-            ps.setString(6, dg.getEmail());
-            ps.setString(7, dg.getSdt());
-            ps.setString(8, dg.getMaDG());
+            ps.setString(4, dg.getNamSinh());
+            ps.setString(5, dg.getGioiTinh());
+            ps.setString(6, dg.getDiaChi());
+            ps.setString(7, dg.getEmail());
+            ps.setString(8, dg.getSdt());
+            ps.setString(9, dg.getMaDG());
             return ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
         return 0;
@@ -198,7 +185,6 @@ public class DocGiaDAO {
         String sql = "DELETE FROM docgia WHERE MaDG=?";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-
             ps.setString(1, maDG);
             return ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
@@ -219,7 +205,6 @@ public class DocGiaDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return "DG001";
     }
-
 
     public boolean existsEmail(String email, String excludeMaDG) {
         String sql = "SELECT 1 FROM docgia WHERE Email=? AND MaDG<>? LIMIT 1";
@@ -249,6 +234,7 @@ public class DocGiaDAO {
                 rs.getString("MaKhoa"),
                 rs.getString("MaLop"),
                 rs.getString("TenDG"),
+                rs.getString("NamSinh"),
                 rs.getString("GioiTinh"),
                 rs.getString("DiaChi"),
                 rs.getString("Email"),

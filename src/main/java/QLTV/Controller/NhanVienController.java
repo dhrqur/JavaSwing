@@ -1,7 +1,7 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template*/
+
 package QLTV.Controller;
 
 import QLTV.Domain.NhanVien;
@@ -15,12 +15,6 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-
-/**
- *
- * @author Admin
- */
-
 
 public class NhanVienController {
 
@@ -65,7 +59,7 @@ public class NhanVienController {
         for (NhanVien nv : list) {
             m.addRow(new Object[]{
                 nv.getMaNV(), nv.getTenNV(), nv.getQueQuan(), nv.getGioiTinh(),
-                nv.getVaiTro(), nv.getEmail(), nv.getSdt()
+                nv.getNamSinh(), nv.getVaiTro(), nv.getEmail(), nv.getSdt(), nv.getUser()
             });
         }
     }
@@ -88,20 +82,35 @@ public class NhanVienController {
                 String.valueOf(m.getValueAt(row, 3)),
                 String.valueOf(m.getValueAt(row, 4)),
                 String.valueOf(m.getValueAt(row, 5)),
-                String.valueOf(m.getValueAt(row, 6))
+                String.valueOf(m.getValueAt(row, 6)),
+                String.valueOf(m.getValueAt(row, 7)),
+                String.valueOf(m.getValueAt(row, 8))
         );
     }
 
-    private NhanVien readForm(String ma) {
+    private boolean isValidNamSinh(String ns) {
+        return Pattern.matches("^\\d{4}$", ns) || Pattern.matches("^\\d{2}/\\d{2}/\\d{4}$", ns);
+    }
+
+    private NhanVien readForm(String ma, boolean isUpdate) {
         String ten = view.getTenNV();
         String que = view.getQueQuan();
         String gt = view.getGioiTinh();
+        String namSinh = view.getNamSinh();
         String vt = view.getVaiTro();
         String email = view.getEmail();
         String sdt = view.getSdt();
+        String user = view.getUser();
+        String pass = view.getPassRaw(); // PLAIN
 
-        if (ten.isEmpty() || que.isEmpty() || gt.isEmpty() || vt.isEmpty() || email.isEmpty() || sdt.isEmpty()) {
+        if (ten.isEmpty() || que.isEmpty() || gt.isEmpty() || namSinh.isEmpty() || vt.isEmpty()
+                || email.isEmpty() || sdt.isEmpty() || user.isEmpty()) {
             JOptionPane.showMessageDialog(view, "Không được để trống!");
+            return null;
+        }
+
+        if (!isValidNamSinh(namSinh)) {
+            JOptionPane.showMessageDialog(view, "Năm sinh không hợp lệ! Nhập YYYY hoặc dd/MM/YYYY");
             return null;
         }
 
@@ -115,30 +124,50 @@ public class NhanVienController {
             return null;
         }
 
-        return new NhanVien(ma, ten, que, gt, vt, email, sdt);
+        if (!isUpdate) {
+            if (pass.isEmpty()) {
+                JOptionPane.showMessageDialog(view, "Không được để trống Pass!");
+                return null;
+            }
+        } else {
+            // update: nếu không nhập pass => giữ pass cũ
+            if (pass.isEmpty()) {
+                String oldPass = "";
+                for (NhanVien nv : dao.findAll()) {
+                    if (nv.getMaNV().equals(ma)) { oldPass = nv.getPass(); break; }
+                }
+                if (oldPass.isEmpty()) {
+                    JOptionPane.showMessageDialog(view, "Không lấy được Pass cũ. Hãy nhập Pass mới!");
+                    return null;
+                }
+                pass = oldPass;
+            }
+        }
+
+        if (pass.length() < 4) {
+            JOptionPane.showMessageDialog(view, "Pass tối thiểu 4 ký tự!");
+            return null;
+        }
+
+        return new NhanVien(ma, ten, que, gt, namSinh, vt, email, sdt, user, pass);
     }
 
     private void handleInsert() {
         String ma = view.getMaNV();
         if (ma.isEmpty()) ma = dao.taoMaNVMoi();
 
-        NhanVien nv = readForm(ma);
+        NhanVien nv = readForm(ma, false);
         if (nv == null) return;
-        
+
         String ten = view.getTenNV();
         if (!ten.isEmpty() && dao.checkTrungTenNV(ten)) {
             JOptionPane.showMessageDialog(view, "Tên nhân viên đã tồn tại!");
             return;
         }
 
-        if (dao.existsEmail(nv.getEmail(), "")) {
-            JOptionPane.showMessageDialog(view, "Email đã tồn tại!");
-            return;
-        }
-        if (dao.existsSdt(nv.getSdt(), "")) {
-            JOptionPane.showMessageDialog(view, "SĐT đã tồn tại!");
-            return;
-        }
+        if (dao.existsEmail(nv.getEmail(), "")) { JOptionPane.showMessageDialog(view, "Email đã tồn tại!"); return; }
+        if (dao.existsSdt(nv.getSdt(), "")) { JOptionPane.showMessageDialog(view, "SĐT đã tồn tại!"); return; }
+        if (dao.existsUser(nv.getUser(), "")) { JOptionPane.showMessageDialog(view, "User đã tồn tại!"); return; }
 
         int ok = dao.insert(nv);
         if (ok > 0) {
@@ -157,24 +186,19 @@ public class NhanVienController {
             JOptionPane.showMessageDialog(view, "Chọn 1 dòng để sửa!");
             return;
         }
-        
+
         String ten = view.getTenNV();
         if (!ten.isEmpty() && dao.checkTrungTenNVKhacMa(ten, ma)) {
             JOptionPane.showMessageDialog(view, "Tên nhân viên đã tồn tại!");
             return;
         }
 
-        NhanVien nv = readForm(ma);
+        NhanVien nv = readForm(ma, true);
         if (nv == null) return;
 
-        if (dao.existsEmail(nv.getEmail(), ma)) {
-            JOptionPane.showMessageDialog(view, "Email đã tồn tại!");
-            return;
-        }
-        if (dao.existsSdt(nv.getSdt(), ma)) {
-            JOptionPane.showMessageDialog(view, "SĐT đã tồn tại!");
-            return;
-        }
+        if (dao.existsEmail(nv.getEmail(), ma)) { JOptionPane.showMessageDialog(view, "Email đã tồn tại!"); return; }
+        if (dao.existsSdt(nv.getSdt(), ma)) { JOptionPane.showMessageDialog(view, "SĐT đã tồn tại!"); return; }
+        if (dao.existsUser(nv.getUser(), ma)) { JOptionPane.showMessageDialog(view, "User đã tồn tại!"); return; }
 
         int ok = dao.update(nv);
         if (ok > 0) {
@@ -205,11 +229,11 @@ public class NhanVienController {
             view.clearForm();
             view.setMaNV(dao.taoMaNVMoi());
         } else {
-            JOptionPane.showMessageDialog(view, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, "Nhân viên này đang được tham chiếu", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // CSV: MaNV,TenNV,QueQuan,GioiTinh,VaiTro,Email,Sdt
+    // CSV: MaNV,TenNV,QueQuan,GioiTinh,NamSinh,VaiTro,Email,Sdt,User,Pass
     private void importCSVToTable() {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Chọn file CSV Nhân viên");
@@ -227,42 +251,35 @@ public class NhanVienController {
                 if (line.trim().isEmpty()) continue;
 
                 String[] p = line.split(",", -1);
-                if (p.length < 7) continue;
+                if (p.length < 10) { skip++; continue; }
 
                 String ma = p[0].trim();
                 String ten = p[1].trim();
                 String que = p[2].trim();
                 String gt = p[3].trim();
-                String vt = p[4].trim();
-                String email = p[5].trim();
-                String sdt = p[6].trim();
+                String ns = p[4].trim();
+                String vt = p[5].trim();
+                String email = p[6].trim();
+                String sdt = p[7].trim();
+                String user = p[8].trim();
+                String pass = p[9].trim();
 
-                if (ma.isEmpty() || ten.isEmpty() || que.isEmpty() || gt.isEmpty() || vt.isEmpty()
-                        || email.isEmpty() || sdt.isEmpty()) {
-                    skip++;
-                    continue;
-                }
+                if (ma.isEmpty() || ten.isEmpty() || que.isEmpty() || gt.isEmpty() || ns.isEmpty() || vt.isEmpty()
+                        || email.isEmpty() || sdt.isEmpty() || user.isEmpty() || pass.isEmpty()) { skip++; continue; }
 
+                if (!isValidNamSinh(ns)) { skip++; continue; }
                 if (!Pattern.matches("^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$", email)) { skip++; continue; }
                 if (!Pattern.matches("^\\d{10,11}$", sdt)) { skip++; continue; }
+                if (pass.length() < 4) { skip++; continue; }
 
-                boolean same = false, dupMa = false;
+                boolean dupMa = false;
+                for (NhanVien nv : dbList) if (nv.getMaNV().equals(ma)) { dupMa = true; break; }
 
-                for (NhanVien nv : dbList) {
-                    if (nv.getMaNV().equals(ma) && nv.getEmail().equals(email) && nv.getSdt().equals(sdt)) {
-                        same = true; break; 
-                    }
-                    if (nv.getMaNV().equals(ma)) dupMa = true;
+                if (dupMa || dao.existsEmail(email, "") || dao.existsSdt(sdt, "") || dao.existsUser(user, "")) {
+                    dup++; continue;
                 }
 
-                if (same) { skip++; continue; }
-
-                if (dupMa || dao.existsEmail(email, "") || dao.existsSdt(sdt, "")) {
-                    dup++;
-                    continue;
-                }
-
-                NhanVien nv = new NhanVien(ma, ten, que, gt, vt, email, sdt);
+                NhanVien nv = new NhanVien(ma, ten, que, gt, ns, vt, email, sdt, user, pass);
                 dao.insert(nv);
                 dbList.add(nv);
                 insert++;
@@ -291,39 +308,32 @@ public class NhanVienController {
             file = new java.io.File(file.getAbsolutePath() + ".csv");
         }
 
-        try (java.io.OutputStream os = new java.io.FileOutputStream(file);
-             java.io.OutputStreamWriter osw = new java.io.OutputStreamWriter(os, java.nio.charset.StandardCharsets.UTF_8);
-             java.io.BufferedWriter bw = new java.io.BufferedWriter(osw);
-             java.io.PrintWriter pw = new java.io.PrintWriter(bw)) {
+        List<NhanVien> list = dao.findAll();
+
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(
+                new java.io.OutputStreamWriter(new java.io.FileOutputStream(file), java.nio.charset.StandardCharsets.UTF_8))) {
 
             pw.print('\uFEFF');
-            DefaultTableModel m = view.getModel();
+            pw.println("MaNV,TenNV,QueQuan,GioiTinh,NamSinh,VaiTro,Email,Sdt,User,Pass");
 
-            for (int c = 0; c < m.getColumnCount(); c++) {
-                pw.print(m.getColumnName(c));
-                if (c < m.getColumnCount() - 1) pw.print(",");
-            }
-            pw.println();
-
-            for (int r = 0; r < m.getRowCount(); r++) {
-                for (int c = 0; c < m.getColumnCount(); c++) {
-                    Object val = m.getValueAt(r, c);
-                    String s = (val == null) ? "" : String.valueOf(val);
-
-                    if (s.contains(",") || s.contains("\"")) {
-                        s = s.replace("\"", "\"\"");
-                        s = "\"" + s + "\"";
-                    }
-
-                    pw.print(s);
-                    if (c < m.getColumnCount() - 1) pw.print(",");
-                }
-                pw.println();
+            for (NhanVien nv : list) {
+                pw.println(csv(nv.getMaNV()) + "," + csv(nv.getTenNV()) + "," + csv(nv.getQueQuan()) + "," +
+                        csv(nv.getGioiTinh()) + "," + csv(nv.getNamSinh()) + "," + csv(nv.getVaiTro()) + "," +
+                        csv(nv.getEmail()) + "," + csv(nv.getSdt()) + "," + csv(nv.getUser()) + "," + csv(nv.getPass()));
             }
 
             JOptionPane.showMessageDialog(view, "Xuất CSV thành công!");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(view, "Xuất CSV thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private static String csv(String s) {
+        if (s == null) s = "";
+        if (s.contains(",") || s.contains("\"")) {
+            s = s.replace("\"", "\"\"");
+            s = "\"" + s + "\"";
+        }
+        return s;
     }
 }

@@ -1,20 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package QLTV.Domain;
-
-/**
- *
- * @author Admin
- */
 
 public class DocGia {
     private String maDG;
     private String maKhoa;
     private String maLop;
     private String tenDG;
-    private String gioiTinh; 
+    private String namSinh;   // NEW
+    private String gioiTinh;
     private String diaChi;
     private String email;
     private String sdt;
@@ -22,11 +14,12 @@ public class DocGia {
     public DocGia() {}
 
     public DocGia(String maDG, String maKhoa, String maLop, String tenDG,
-                  String gioiTinh, String diaChi, String email, String sdt) {
+                  String namSinh, String gioiTinh, String diaChi, String email, String sdt) {
         this.maDG = maDG;
         this.maKhoa = maKhoa;
         this.maLop = maLop;
         this.tenDG = tenDG;
+        this.namSinh = namSinh;
         this.gioiTinh = gioiTinh;
         this.diaChi = diaChi;
         this.email = email;
@@ -44,6 +37,9 @@ public class DocGia {
 
     public String getTenDG() { return tenDG; }
     public void setTenDG(String tenDG) { this.tenDG = tenDG; }
+
+    public String getNamSinh() { return namSinh; }
+    public void setNamSinh(String namSinh) { this.namSinh = namSinh; }
 
     public String getGioiTinh() { return gioiTinh; }
     public void setGioiTinh(String gioiTinh) { this.gioiTinh = gioiTinh; }
