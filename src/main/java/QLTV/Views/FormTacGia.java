@@ -43,8 +43,20 @@ public class FormTacGia extends JPanel {
     private JTextField txtTenTG = new JTextField();
     private JTextField txtNamSinh = new JTextField();
 
-    private JComboBox<String> cboGioiTinh = new JComboBox<>();
-    private JComboBox<String> cboQuocTich = new JComboBox<>();
+    private JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Nam", "Nữ"});
+    private JComboBox<String> cboQuocTich = new JComboBox<>(new String[]{
+    "Việt Nam",
+    "Hoa Kỳ",
+    "Anh",
+    "Nga",
+    "Brazil",
+    "Pháp",
+    "Đức",
+    "Nhật Bản",
+    "Hàn Quốc",
+    "Trung Quốc",
+    "Úc",
+    "Canada"});
 
     private JButton btnThem = new JButton("Thêm");
     private JButton btnSua = new JButton("Sửa");
@@ -333,8 +345,7 @@ public class FormTacGia extends JPanel {
         txtMaTG.setText(ma);
         txtTenTG.setText(ten);
         txtNamSinh.setText(namSinh);
-
-        if (gioiTinh != null) cboGioiTinh.setSelectedItem(gioiTinh);
-        if (quocTich != null) cboQuocTich.setSelectedItem(quocTich);
+        cboGioiTinh.setSelectedItem(gioiTinh);
+        cboQuocTich.setSelectedItem(quocTich);
     }
 }

@@ -23,6 +23,7 @@ import javax.swing.table.DefaultTableModel;
  * @author Admin
  */
 
+
 public class TheThuVienController {
 
     private final FormTheThuVien view;
@@ -57,15 +58,17 @@ public class TheThuVienController {
         view.getBtnSearch().addActionListener(e -> handleSearch());
         view.getTxtSearch().addActionListener(e -> handleSearch());
 
-        view.getBtnNhapFile().addActionListener(e -> importCSVToTable());
-        view.getBtnXuatFile().addActionListener(e -> exportTableToCSV());
+        view.getBtnNhapFile().addActionListener(e -> importCSV());
+        view.getBtnXuatFile().addActionListener(e -> exportCSV());
 
         view.getTblThe().getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) fillFormFromSelectedRow();
+            if (!e.getValueIsAdjusting()) fillFormFromTable();
         });
     }
 
     private void loadTable() {
+        fillTable(dao.findAll());
+        autoUpdateTrangThai();
         fillTable(dao.findAll());
     }
 
@@ -76,8 +79,8 @@ public class TheThuVienController {
             m.addRow(new Object[]{
                 t.getMaThe(),
                 t.getMaDG(),
-                t.getNgayCap(),
-                t.getNgayHetHan(),
+                t.getNgayCap() == null ? "" : t.getNgayCap().toString(),
+                t.getNgayHetHan() == null ? "" : t.getNgayHetHan().toString(),
                 t.getTrangThai()
             });
         }
@@ -89,122 +92,141 @@ public class TheThuVienController {
         fillTable(dao.search(key));
     }
 
-    private void fillFormFromSelectedRow() {
+    private void fillFormFromTable() {
         int row = view.getTblThe().getSelectedRow();
         if (row < 0) return;
 
         DefaultTableModel m = view.getModel();
-
-        String maThe = String.valueOf(m.getValueAt(row, 0));
-        String maDG  = String.valueOf(m.getValueAt(row, 1));
-
-        java.sql.Date ngayCap = (java.sql.Date) m.getValueAt(row, 2);
-        java.sql.Date ngayHet = (java.sql.Date) m.getValueAt(row, 3);
-
-        String tt = String.valueOf(m.getValueAt(row, 4));
-
-        view.setForm(maThe, maDG, ngayCap, ngayHet, tt);
-    }
-
-
-    private TheThuVien readForm(String maThe) {
-        String maDG = view.getMaDG();
-        java.util.Date ncU = view.getNgayCap();
-        java.util.Date nhU = view.getNgayHetHan();
-        String tt = view.getTrangThai();
-
-        if (maDG.isEmpty() || ncU == null || nhU == null || tt.isEmpty()) {
-            JOptionPane.showMessageDialog(view, "Không được để trống!");
-            return null;
-        }
-
-        java.sql.Date nc = new java.sql.Date(ncU.getTime());
-        java.sql.Date nh = new java.sql.Date(nhU.getTime());
-
-        if (nh.before(nc)) {
-            JOptionPane.showMessageDialog(view, "Ngày hết hạn < ngày cấp!");
-            return null;
-        }
-
-        return new TheThuVien(maThe, maDG, nc, nh, tt);
+        view.setForm(
+                String.valueOf(m.getValueAt(row, 0)),
+                String.valueOf(m.getValueAt(row, 1)),
+                String.valueOf(m.getValueAt(row, 2)),
+                String.valueOf(m.getValueAt(row, 3)),
+                String.valueOf(m.getValueAt(row, 4))
+        );
     }
 
     private void handleInsert() {
-        String ma = view.getMaThe();
-        if (ma.isEmpty()) ma = dao.taoMaTheMoi();
+        String maThe = view.getMaThe();
+        if (maThe.isEmpty()) maThe = dao.taoMaTheMoi();
 
-        TheThuVien t = readForm(ma);
+        TheThuVien t = readForm(maThe);
         if (t == null) return;
 
-        // trùng mã thẻ / hoặc 1 độc giả đã có thẻ
-        if (dao.existsMaThe(ma) || dao.existsMaDG(t.getMaDG(), "")) {
-            JOptionPane.showMessageDialog(view, "Trùng dữ liệu!");
+        // 1 độc giả 1 thẻ
+        if (dao.existsMaDG(t.getMaDG(), "")) {
+            JOptionPane.showMessageDialog(view, "Độc giả đã có thẻ!");
             return;
         }
 
         int ok = dao.insert(t);
         if (ok > 0) {
-            JOptionPane.showMessageDialog(view, "Thêm thành công!");
+            JOptionPane.showMessageDialog(view, "Thêm OK!");
             loadTable();
             view.clearForm();
             initCombos();
             view.setMaThe(dao.taoMaTheMoi());
         } else {
-            JOptionPane.showMessageDialog(view, "Thêm thất bại!");
+            JOptionPane.showMessageDialog(view, "Thêm lỗi!");
         }
     }
 
     private void handleUpdate() {
-        String ma = view.getMaThe();
-        if (ma.isEmpty()) { JOptionPane.showMessageDialog(view, "Chọn 1 dòng!"); return; }
+        String maThe = view.getMaThe();
+        if (maThe.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Chọn 1 dòng để sửa!");
+            return;
+        }
 
-        TheThuVien t = readForm(ma);
+        TheThuVien t = readForm(maThe);
         if (t == null) return;
 
-        if (dao.existsMaDG(t.getMaDG(), ma)) {
-            JOptionPane.showMessageDialog(view, "Độc giả đã có thẻ!");
+        if (dao.existsMaDG(t.getMaDG(), maThe)) {
+            JOptionPane.showMessageDialog(view, "Độc giả đã có thẻ khác!");
             return;
         }
 
         int ok = dao.update(t);
         if (ok > 0) {
-            JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
+            JOptionPane.showMessageDialog(view, "Sửa OK!");
             loadTable();
         } else {
-            JOptionPane.showMessageDialog(view, "Cập nhật thất bại!");
+            JOptionPane.showMessageDialog(view, "Sửa lỗi!");
         }
     }
 
     private void handleDelete() {
-        int row = view.getTblThe().getSelectedRow();
-        String ma = view.getMaThe();
-        if (ma.isEmpty() && row >= 0) ma = String.valueOf(view.getModel().getValueAt(row, 0));
-        if (ma.isEmpty()) { JOptionPane.showMessageDialog(view, "Chọn 1 dòng!"); return; }
+        String maThe = view.getMaThe();
+        if (maThe.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Chọn 1 dòng để xóa!");
+            return;
+        }
 
-        if (JOptionPane.showConfirmDialog(view, "Xóa " + ma + " ?", "Xác nhận",
-                JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        int cf = JOptionPane.showConfirmDialog(view, "Xóa thẻ " + maThe + " ?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (cf != JOptionPane.YES_OPTION) return;
 
-        int ok = dao.delete(ma);
+        int ok = dao.delete(maThe);
         if (ok > 0) {
-            JOptionPane.showMessageDialog(view, "Xóa thành công!");
+            JOptionPane.showMessageDialog(view, "Xóa OK!");
             loadTable();
             view.clearForm();
             initCombos();
             view.setMaThe(dao.taoMaTheMoi());
         } else {
-            JOptionPane.showMessageDialog(view, "Xóa thất bại!");
+            JOptionPane.showMessageDialog(view, "Xóa lỗi!");
         }
     }
 
-    // CSV: MaThe,MaDG,NgayCap,NgayHetHan,TrangThai
-    // - y hệt -> skip
-    // - trùng MaThe / MaDG đã có thẻ -> báo "Dòng bị trùng: ..."
-    private void importCSVToTable() {
+    private TheThuVien readForm(String maThe) {
+        String maDG = view.getMaDG();
+        String ncS = view.getNgayCapText();
+        String nhS = view.getNgayHetHanText();
+
+        if (maDG.isEmpty() || ncS.isEmpty() || nhS.isEmpty()) {
+            JOptionPane.showMessageDialog(view, "Không được để trống!");
+            return null;
+        }
+
+        java.sql.Date nc, nh;
+        try {
+            nc = java.sql.Date.valueOf(LocalDate.parse(ncS.trim()));
+            nh = java.sql.Date.valueOf(LocalDate.parse(nhS.trim()));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Ngày phải đúng định dạng yyyy-MM-dd");
+            return null;
+        }
+
+        String tt = autoTrangThai(nh);
+        view.getCboTrangThai().setSelectedItem(tt);
+
+        return new TheThuVien(maThe, maDG, nc, nh, tt);
+    }
+
+    private String autoTrangThai(java.sql.Date ngayHetHan) {
+        LocalDate now = LocalDate.now();
+        LocalDate hh = ngayHetHan.toLocalDate();
+        return now.isAfter(hh) ? "Hết hiệu lực" : "Còn hiệu lực";
+    }
+
+    private void autoUpdateTrangThai() {
+        List<TheThuVien> list = dao.findAll();
+        for (TheThuVien t : list) {
+            if (t.getNgayHetHan() == null) continue;
+            String newTT = autoTrangThai(t.getNgayHetHan());
+            if (t.getTrangThai() == null || !t.getTrangThai().equals(newTT)) {
+                t.setTrangThai(newTT);
+                dao.update(t);
+            }
+        }
+    }
+
+    // CSV: MaThe,MaDG,NgayCap,NgayHetHan,TrangThai (TrangThai có cũng dc, auto lại)
+    private void importCSV() {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Chọn file CSV Thẻ");
+        fc.setDialogTitle("Chọn file CSV Thẻ thư viện");
         if (fc.showOpenDialog(view) != JFileChooser.APPROVE_OPTION) return;
 
-        List<TheThuVien> dbList = dao.findAll();
+        List<TheThuVien> db = dao.findAll();
         int insert = 0, skip = 0, dup = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
@@ -216,54 +238,49 @@ public class TheThuVienController {
                 if (line.trim().isEmpty()) continue;
 
                 String[] p = line.split(",", -1);
-                if (p.length < 5) { skip++; continue; }
+                if (p.length < 4) { skip++; continue; }
 
                 String maThe = p[0].trim();
                 String maDG  = p[1].trim();
                 String ncS   = p[2].trim();
                 String nhS   = p[3].trim();
-                String tt    = p[4].trim();
 
-                if (maDG.isEmpty() || ncS.isEmpty() || nhS.isEmpty() || tt.isEmpty()) { skip++; continue; }
-                if (maThe.isEmpty()) maThe = dao.taoMaTheMoi();
+                if (maThe.isEmpty() || maDG.isEmpty() || ncS.isEmpty() || nhS.isEmpty()) {
+                    skip++; continue;
+                }
 
-                boolean same = false, dupMa = false, dupDG = false;
+                java.sql.Date nc, nh;
+                try {
+                    nc = java.sql.Date.valueOf(LocalDate.parse(ncS));
+                    nh = java.sql.Date.valueOf(LocalDate.parse(nhS));
+                } catch (Exception ex) { skip++; continue; }
 
-                for (TheThuVien t : dbList) {
+                String tt = autoTrangThai(nh);
+
+                boolean same = false, dupMaThe = false, dupMaDG = false;
+
+                for (TheThuVien t : db) {
                     if (t.getMaThe().equals(maThe)
                             && t.getMaDG().equals(maDG)
-                            && String.valueOf(t.getNgayCap()).equals(ncS)
-                            && String.valueOf(t.getNgayHetHan()).equals(nhS)
-                            && t.getTrangThai().equals(tt)) {
+                            && t.getNgayCap() != null && t.getNgayHetHan() != null
+                            && t.getNgayCap().toString().equals(nc.toString())
+                            && t.getNgayHetHan().toString().equals(nh.toString())) {
                         same = true; break;
                     }
-                    if (t.getMaThe().equals(maThe)) dupMa = true;
-                    if (t.getMaDG().equals(maDG)) dupDG = true; // 1 DG 1 thẻ
+                    if (t.getMaThe().equals(maThe)) dupMaThe = true;
+                    if (t.getMaDG().equals(maDG)) dupMaDG = true;
                 }
 
                 if (same) { skip++; continue; }
-
-                // check DB thêm cho chắc
-                if (dupMa || dupDG || dao.existsMaThe(maThe) || dao.existsMaDG(maDG, "")) {
+                if (dupMaThe || dupMaDG) {
                     dup++;
-                    JOptionPane.showMessageDialog(view, "Dòng bị trùng: " + maThe + " - " + maDG);
+                    JOptionPane.showMessageDialog(view, "Trùng: " + maThe + " / " + maDG);
                     continue;
                 }
 
-                // parse date
-                TheThuVien tNew;
-                try {
-                    LocalDate nc = LocalDate.parse(ncS);
-                    LocalDate nh = LocalDate.parse(nhS);
-                    if (nh.isBefore(nc)) { skip++; continue; }
-                    tNew = new TheThuVien(maThe, maDG, Date.valueOf(nc), Date.valueOf(nh), tt);
-                } catch (Exception ex) {
-                    skip++;
-                    continue;
-                }
-
+                TheThuVien tNew = new TheThuVien(maThe, maDG, nc, nh, tt);
                 dao.insert(tNew);
-                dbList.add(tNew);
+                db.add(tNew);
                 insert++;
             }
 
@@ -272,19 +289,17 @@ public class TheThuVienController {
             initCombos();
             view.setMaThe(dao.taoMaTheMoi());
 
-            JOptionPane.showMessageDialog(view,
-                    "Import xong!\nThêm: " + insert + "\nBỏ qua: " + skip + "\nTrùng: " + dup);
+            JOptionPane.showMessageDialog(view, "Import xong!\nThêm: " + insert + "\nBỏ qua: " + skip + "\nTrùng: " + dup);
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "Lỗi nhập file!");
         }
     }
 
-    private void exportTableToCSV() {
+    private void exportCSV() {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Chọn nơi lưu CSV Thẻ");
-        int choose = fc.showSaveDialog(view);
-        if (choose != JFileChooser.APPROVE_OPTION) return;
+        fc.setDialogTitle("Chọn nơi lưu CSV Thẻ thư viện");
+        if (fc.showSaveDialog(view) != JFileChooser.APPROVE_OPTION) return;
 
         java.io.File file = fc.getSelectedFile();
         if (!file.getName().toLowerCase().endsWith(".csv")) {
@@ -296,9 +311,9 @@ public class TheThuVienController {
              java.io.BufferedWriter bw = new java.io.BufferedWriter(osw);
              java.io.PrintWriter pw = new java.io.PrintWriter(bw)) {
 
-            pw.print('\uFEFF');
-            DefaultTableModel m = view.getModel();
+            pw.print('\uFEFF'); // BOM
 
+            DefaultTableModel m = view.getModel();
             for (int c = 0; c < m.getColumnCount(); c++) {
                 pw.print(m.getColumnName(c));
                 if (c < m.getColumnCount() - 1) pw.print(",");
@@ -321,9 +336,8 @@ public class TheThuVienController {
             }
 
             JOptionPane.showMessageDialog(view, "Xuất CSV thành công!");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(view, "Xuất CSV thất bại!");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Xuất CSV lỗi!");
         }
     }
 }
-

@@ -109,6 +109,22 @@ public class KhoaDAO {
 
         return list;
     }
+    public List<String[]> findAllMaTenKhoa() {
+    String sql = "SELECT MaKhoa, TenKhoa FROM khoa ORDER BY MaKhoa";
+    List<String[]> list = new ArrayList<>();
+
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            list.add(new String[]{rs.getString("MaKhoa"), rs.getString("TenKhoa")});
+        }
+    } catch (Exception e) { e.printStackTrace(); }
+
+    return list;
+}
+
 
     public String taoMaKhoaMoi() {
         String sql = "SELECT MaKhoa FROM khoa ORDER BY MaKhoa DESC LIMIT 1";

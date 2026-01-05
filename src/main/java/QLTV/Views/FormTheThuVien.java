@@ -8,14 +8,13 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
-import com.toedter.calendar.JDateChooser;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
 
 /**
  *
  * @author Admin
  */
+
 public class FormTheThuVien extends JPanel {
 
     private JTextField txtSearch = new JTextField();
@@ -23,14 +22,9 @@ public class FormTheThuVien extends JPanel {
 
     private JTextField txtMaThe = new JTextField();
     private JComboBox<String> cboMaDG = new JComboBox<>();
-
-    // ✅ JDateChooser
-    private JDateChooser dcNgayCap = new JDateChooser();
-    private JDateChooser dcNgayHetHan = new JDateChooser();
-
-    private JComboBox<String> cboTrangThai = new JComboBox<>(new String[]{
-        "Còn hiệu lực", "Hết hạn", "Khóa"
-    });
+    private JTextField txtNgayCap = new JTextField();     // yyyy-MM-dd
+    private JTextField txtNgayHetHan = new JTextField();  // yyyy-MM-dd
+    private JComboBox<String> cboTrangThai = new JComboBox<>(new String[]{"Còn hiệu lực", "Hết hiệu lực"});
 
     private JButton btnThem = new JButton("Thêm");
     private JButton btnSua = new JButton("Sửa");
@@ -41,8 +35,6 @@ public class FormTheThuVien extends JPanel {
 
     private JTable tblThe;
     private DefaultTableModel model;
-
-    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
     public FormTheThuVien() {
         setLayout(new BorderLayout());
@@ -81,14 +73,17 @@ public class FormTheThuVien extends JPanel {
 
         header.add(title, BorderLayout.WEST);
         header.add(searchBox, BorderLayout.EAST);
+
         return header;
     }
 
     private JComponent createBody() {
         JPanel body = new JPanel(new BorderLayout(12, 12));
         body.setOpaque(false);
+
         body.add(createFormCard(), BorderLayout.WEST);
         body.add(createTableCard(), BorderLayout.CENTER);
+
         return body;
     }
 
@@ -99,7 +94,7 @@ public class FormTheThuVien extends JPanel {
         card.setPreferredSize(new Dimension(360, 0));
         card.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        JLabel lb = new JLabel("Thông tin thẻ");
+        JLabel lb = new JLabel("Thông tin thẻ thư viện");
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
@@ -114,21 +109,9 @@ public class FormTheThuVien extends JPanel {
         int r = 0;
         r = addRow(form, gbc, r, "Mã thẻ", txtMaThe);
         r = addRow(form, gbc, r, "Mã độc giả", cboMaDG);
-
-        // ✅ style cho date chooser
-        styleDateChooser(dcNgayCap);
-        styleDateChooser(dcNgayHetHan);
-
-        r = addRow(form, gbc, r, "Ngày cấp", dcNgayCap);
-        r = addRow(form, gbc, r, "Ngày hết hạn", dcNgayHetHan);
+        r = addRow(form, gbc, r, "Ngày cấp (yyyy-MM-dd)", txtNgayCap);
+        r = addRow(form, gbc, r, "Ngày hết hạn (yyyy-MM-dd)", txtNgayHetHan);
         r = addRow(form, gbc, r, "Trạng thái", cboTrangThai);
-
-        JScrollPane spForm = new JScrollPane(form);
-        spForm.setBorder(null);
-        spForm.getViewport().setOpaque(false);
-        spForm.setOpaque(false);
-        spForm.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        spForm.getVerticalScrollBar().setUnitIncrement(16);
 
         JPanel actions = new JPanel(new GridLayout(3, 2, 10, 10));
         actions.setOpaque(false);
@@ -154,7 +137,7 @@ public class FormTheThuVien extends JPanel {
         top.add(new JSeparator(), BorderLayout.SOUTH);
 
         card.add(top, BorderLayout.NORTH);
-        card.add(spForm, BorderLayout.CENTER);
+        card.add(form, BorderLayout.CENTER);
         card.add(actions, BorderLayout.SOUTH);
 
         styleInput(txtMaThe);
@@ -162,6 +145,8 @@ public class FormTheThuVien extends JPanel {
         txtMaThe.setBackground(new Color(230, 230, 230));
 
         styleCombo(cboMaDG);
+        styleInput(txtNgayCap);
+        styleInput(txtNgayHetHan);
         styleCombo(cboTrangThai);
 
         return card;
@@ -170,11 +155,14 @@ public class FormTheThuVien extends JPanel {
     private int addRow(JPanel form, GridBagConstraints gbc, int row, String text, JComponent field) {
         JLabel lb = new JLabel(text);
         lb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
         gbc.gridx = 0;
         gbc.gridy = row;
         form.add(lb, gbc);
+
         gbc.gridy = row + 1;
         form.add(field, gbc);
+
         return row + 2;
     }
 
@@ -188,7 +176,7 @@ public class FormTheThuVien extends JPanel {
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
-        String[] cols = {"Mã thẻ", "Mã DG", "Ngày cấp", "Ngày hết hạn", "Trạng thái"};
+        String[] cols = {"Mã thẻ", "Mã độc giả", "Ngày cấp", "Ngày hết hạn", "Trạng thái"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -209,10 +197,11 @@ public class FormTheThuVien extends JPanel {
 
         card.add(top, BorderLayout.NORTH);
         card.add(sp, BorderLayout.CENTER);
+
         return card;
     }
 
-    // ===== styles =====
+    // ===== Styles =====
     private void styleInput(JTextField f) {
         f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         f.setPreferredSize(new Dimension(0, 36));
@@ -232,21 +221,6 @@ public class FormTheThuVien extends JPanel {
         ));
         cb.setBackground(new Color(250, 252, 255));
         cb.setOpaque(true);
-    }
-
-    private void styleDateChooser(JDateChooser dc) {
-        dc.setDateFormatString("yyyy-MM-dd");
-        dc.setPreferredSize(new Dimension(0, 36));
-        dc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        // chỉnh field bên trong
-        if (dc.getDateEditor() != null && dc.getDateEditor().getUiComponent() instanceof JTextField tf) {
-            tf.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(210, 220, 230), 1, true),
-                    new EmptyBorder(8, 10, 8, 10)
-            ));
-            tf.setBackground(new Color(250, 252, 255));
-            tf.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        }
     }
 
     private void stylePrimary(JButton b) {
@@ -302,7 +276,7 @@ public class FormTheThuVien extends JPanel {
         }
     }
 
-    // ===== getters =====
+    // ===== Getters =====
     public JTextField getTxtSearch() { return txtSearch; }
     public JButton getBtnSearch() { return btnSearch; }
 
@@ -321,26 +295,26 @@ public class FormTheThuVien extends JPanel {
 
     public String getMaThe() { return txtMaThe.getText().trim(); }
     public String getMaDG() { return cboMaDG.getSelectedItem() == null ? "" : cboMaDG.getSelectedItem().toString(); }
-    public Date getNgayCap() { return dcNgayCap.getDate(); }
-    public Date getNgayHetHan() { return dcNgayHetHan.getDate(); }
+    public String getNgayCapText() { return txtNgayCap.getText().trim(); }
+    public String getNgayHetHanText() { return txtNgayHetHan.getText().trim(); }
     public String getTrangThai() { return cboTrangThai.getSelectedItem() == null ? "" : cboTrangThai.getSelectedItem().toString(); }
 
     public void setMaThe(String ma) { txtMaThe.setText(ma); }
-    public void setNgayCap(Date d) { dcNgayCap.setDate(d); }
-    public void setNgayHetHan(Date d) { dcNgayHetHan.setDate(d); }
+    public void setNgayCapText(String s) { txtNgayCap.setText(s); }
+    public void setNgayHetHanText(String s) { txtNgayHetHan.setText(s); }
 
     public void clearForm() {
         txtMaThe.setText("");
-        dcNgayCap.setDate(null);
-        dcNgayHetHan.setDate(null);
+        txtNgayCap.setText("");
+        txtNgayHetHan.setText("");
         if (cboTrangThai.getItemCount() > 0) cboTrangThai.setSelectedIndex(0);
     }
 
-    public void setForm(String maThe, String maDG, Date ngayCap, Date ngayHetHan, String trangThai) {
+    public void setForm(String maThe, String maDG, String ngayCap, String ngayHetHan, String trangThai) {
         txtMaThe.setText(maThe);
         cboMaDG.setSelectedItem(maDG);
-        dcNgayCap.setDate(ngayCap);
-        dcNgayHetHan.setDate(ngayHetHan);
+        txtNgayCap.setText(ngayCap);
+        txtNgayHetHan.setText(ngayHetHan);
         cboTrangThai.setSelectedItem(trangThai);
     }
 }

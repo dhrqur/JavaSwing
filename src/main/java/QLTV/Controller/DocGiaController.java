@@ -5,6 +5,8 @@
 package QLTV.Controller;
 
 import QLTV.Domain.DocGia;
+import QLTV.Domain.Khoa;
+import QLTV.Domain.Lop;
 import QLTV.Model.DocGiaDAO;
 import QLTV.Model.KhoaDAO;
 import QLTV.Model.LopDAO;
@@ -38,22 +40,22 @@ public class DocGiaController {
     }
 
     private void initCombos() {
-        // Load MaKhoa
-        view.getCboMaKhoa().removeAllItems();
-        List<String> maKhoas = khoaDAO.findAllMaKhoa();
-        for (String mk : maKhoas) view.getCboMaKhoa().addItem(mk);
+        view.getCboKhoa().removeAllItems();
+        for (Khoa k : khoaDAO.findAll()) {
+            view.getCboKhoa().addItem(k);
+        }
 
-        // Load MaLop theo khoa đang chọn
         reloadLopBySelectedKhoa();
     }
 
     private void reloadLopBySelectedKhoa() {
-        String maKhoa = (String) view.getCboMaKhoa().getSelectedItem();
-        view.getCboMaLop().removeAllItems();
-        if (maKhoa == null) return;
+        Khoa k = (Khoa) view.getCboKhoa().getSelectedItem();
+        view.getCboLop().removeAllItems();
+        if (k == null) return;
 
-        List<String> maLops = lopDAO.findMaLopByMaKhoa(maKhoa);
-        for (String ml : maLops) view.getCboMaLop().addItem(ml);
+        for (Lop l : lopDAO.findMaLopByMaKhoa(k.getMaKhoa())) {
+            view.getCboLop().addItem(l);
+        }
     }
 
     private void registerEvents() {
@@ -72,8 +74,7 @@ public class DocGiaController {
         view.getBtnSearch().addActionListener(e -> handleSearch());
         view.getTxtSearch().addActionListener(e -> handleSearch());
 
-        // cascade: chọn khoa -> load lớp
-        view.getCboMaKhoa().addActionListener(e -> reloadLopBySelectedKhoa());
+        view.getCboKhoa().addActionListener(e -> reloadLopBySelectedKhoa());
 
         view.getTblDG().getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) fillFormFromSelectedRow();
@@ -107,6 +108,12 @@ public class DocGiaController {
 
         DocGia dg = readForm(ma);
         if (dg == null) return;
+        
+        String tendg = view.getTenDG();
+        if (!tendg.isEmpty() && dao.checkTrungTenDocGia(tendg)) {
+            JOptionPane.showMessageDialog(view, "Tên độc giả đã tồn tại!");
+            return;
+        }
 
         if (dao.existsEmail(dg.getEmail(), "")) {
             JOptionPane.showMessageDialog(view, "Email đã tồn tại!");
@@ -139,6 +146,12 @@ public class DocGiaController {
 
         DocGia dg = readForm(ma);
         if (dg == null) return;
+        
+        String ten = view.getTenDG();
+        if (!ten.isEmpty() && dao.checkTrungTenDocGiaKhacMa(ten, ma)) {
+            JOptionPane.showMessageDialog(view, "Tên độc giả đã tồn tại!");
+            return;
+        }
 
         if (dao.existsEmail(dg.getEmail(), dg.getMaDG())) {
             JOptionPane.showMessageDialog(view, "Email đã tồn tại ở độc giả khác!");
@@ -189,6 +202,7 @@ public class DocGiaController {
         if (row < 0) return;
 
         DefaultTableModel m = view.getModel();
+
         String maDG = String.valueOf(m.getValueAt(row, 0));
         String maKhoa = String.valueOf(m.getValueAt(row, 1));
         String maLop = String.valueOf(m.getValueAt(row, 2));
@@ -198,17 +212,42 @@ public class DocGiaController {
         String email = String.valueOf(m.getValueAt(row, 6));
         String sdt = String.valueOf(m.getValueAt(row, 7));
 
-        // set khoa -> reload lớp -> set lớp
-        view.getCboMaKhoa().setSelectedItem(maKhoa);
-        reloadLopBySelectedKhoa();
-        view.getCboMaLop().setSelectedItem(maLop);
+        view.setSelectedKhoa(maKhoa);
 
-        view.setForm(maDG, maKhoa, maLop, ten, gt, dc, email, sdt);
+        reloadLopBySelectedKhoa();
+
+        view.setSelectedLop(maLop);
+
+         view.setForm(maDG, maKhoa, maLop, ten, gt, dc, email, sdt);
+    }
+    private void setSelectedKhoa(String maKhoa) {
+        for (int i = 0; i < view.getCboKhoa().getItemCount(); i++) {
+            if (view.getCboKhoa().getItemAt(i).getMaKhoa().equals(maKhoa)) {
+                view.getCboKhoa().setSelectedIndex(i);
+                break;
+            }
+        }
     }
 
+    private void setSelectedLop(String maLop) {
+        for (int i = 0; i < view.getCboLop().getItemCount(); i++) {
+            if (view.getCboLop().getItemAt(i).getMaLop().equals(maLop)) {
+                view.getCboLop().setSelectedIndex(i);
+                break;
+            }
+        }
+    }
     private DocGia readForm(String ma) {
-        String maKhoa = view.getMaKhoa();
-        String maLop = view.getMaLop();
+        Khoa k = (Khoa) view.getCboKhoa().getSelectedItem();
+        Lop l = (Lop) view.getCboLop().getSelectedItem();
+
+        if (k == null || l == null) {
+            JOptionPane.showMessageDialog(view, "Chọn Khoa và Lớp!");
+            return null;
+        }
+
+        String maKhoa = k.getMaKhoa();
+        String maLop = l.getMaLop();
         String ten = view.getTenDG();
         String gt = view.getGioiTinh();
         String dc = view.getDiaChi();
@@ -245,63 +284,71 @@ public class DocGiaController {
         fc.setDialogTitle("Chọn file CSV Độc Giả");
         if (fc.showOpenDialog(view) != JFileChooser.APPROVE_OPTION) return;
 
-        List<DocGia> dbList = dao.findAll();
-
-        int insert = 0, skip = 0, dup = 0;
+        int readCount = 0;
+        int insertCount = 0;
 
         try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
             String line;
-            boolean header = true;
+
+            br.readLine();
 
             while ((line = br.readLine()) != null) {
-                if (header) { header = false; continue; }
                 if (line.trim().isEmpty()) continue;
 
                 String[] p = line.split(",", -1);
                 if (p.length < 8) continue;
 
-                String ma   = p[0].trim();
-                String maK  = p[1].trim();
-                String maL  = p[2].trim();
-                String ten  = p[3].trim();
-                String gt   = p[4].trim();
-                String dc   = p[5].trim();
-                String mail = p[6].trim();
-                String sdt  = p[7].trim();
+                try {
+                    String ma   = p[0].trim();
+                    String maK  = p[1].trim();
+                    String maL  = p[2].trim();
+                    String ten  = p[3].trim();
+                    String gt   = p[4].trim();
+                    String dc   = p[5].trim();
+                    String mail = p[6].trim();
+                    String sdt  = p[7].trim();
 
-                if (ma.isEmpty() || maK.isEmpty() || maL.isEmpty()
-                        || ten.isEmpty() || dc.isEmpty()
-                        || mail.isEmpty() || sdt.isEmpty()) {
-                    skip++;
-                    continue;
-                }
-
-                boolean same = false;
-                boolean dupMa = false;
-
-                for (DocGia dg : dbList) {
-                    if (dg.getMaDG().equals(ma)
-                            && dg.getEmail().equals(mail)
-                            && dg.getSdt().equals(sdt)) {
-                        same = true;                 // y hệt
-                        break;
+                    if (ma.isEmpty() || maK.isEmpty() || maL.isEmpty()
+                            || ten.isEmpty() || dc.isEmpty()
+                            || mail.isEmpty() || sdt.isEmpty()) {
+                        continue;
                     }
-                    if (dg.getMaDG().equals(ma)) {
-                        dupMa = true;                // trùng mã độc giả
+
+                    if (!Pattern.matches("^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$", mail)) {
+                        JOptionPane.showMessageDialog(view,
+                                "Email không hợp lệ ở dòng:\n" + line,
+                                "IMPORT THẤT BẠI", JOptionPane.ERROR_MESSAGE);
+                        return;
                     }
+
+                    if (!Pattern.matches("^\\d{10,11}$", sdt)) {
+                        JOptionPane.showMessageDialog(view,
+                                "SĐT không hợp lệ ở dòng:\n" + line,
+                                "IMPORT THẤT BẠI", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    if (dao.existsEmail(mail, "")) continue;
+                    if (dao.existsSdt(sdt, "")) continue;
+                    if (dao.checkTrungTenDocGia(ten)) continue;
+
+                    DocGia dg = new DocGia(ma, maK, maL, ten, gt, dc, mail, sdt);
+
+                    try {
+                        int ok = dao.insert(dg);
+                        if (ok > 0) insertCount++;
+                        readCount++;
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(view,
+                                "Lỗi ở dòng CSV:\n" + line + "\n\nChi tiết:\n" + ex.getMessage(),
+                                "IMPORT THẤT BẠI", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                } catch (Exception rowErr) {
+                    rowErr.printStackTrace();
                 }
-
-                if (same) { skip++; continue; }
-
-                if (dupMa || dao.existsEmail(mail, "") || dao.existsSdt(sdt, "")) {
-                    dup++;
-                    continue;
-                }
-
-                DocGia dg = new DocGia(ma, maK, maL, ten, gt, dc, mail, sdt);
-                dao.insert(dg);
-                dbList.add(dg);
-                insert++;
             }
 
             loadTable();
@@ -309,18 +356,17 @@ public class DocGiaController {
             initCombos();
             view.setMaDG(dao.taoMaDGMoi());
 
-            JOptionPane.showMessageDialog(
-                view,
-                "Import xong!\n"
-              + "Thêm: " + insert + "\n"
-              + "Bỏ qua: " + skip + "\n"
-              + "Trùng: " + dup
-            );
+            JOptionPane.showMessageDialog(view,
+                    "Đọc hợp lệ: " + readCount + " dòng\n"
+                  + "Đã lưu DB: " + insertCount + " dòng",
+                    "OK", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi nhập file!");
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(view, "Lỗi nhập file!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
 
     private void exportTableToCSV() {

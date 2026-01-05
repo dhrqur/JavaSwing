@@ -9,14 +9,14 @@ package QLTV.Domain;
  * @author dinhd
  */
 public class Sach {
-    private String masach, matg, manxb, matl, tensach, tinhtrang, mota, mann, mavitri;
+    private String masach, matg, manxb, matl, tensach, mann, mavitri;
     private int namxb;
     private Integer soluong;
 
     public Sach() {
     }
 
-    public Sach(String masach, String matg, String manxb, String matl, String tensach,int namxb, Integer soluong, String tinhtrang, String mota, String mann, String mavitri) {
+    public Sach(String masach, String matg, String manxb, String matl, String tensach,int namxb, Integer soluong, String mann, String mavitri) {
         this.masach = masach;
         this.matg = matg;
         this.manxb = manxb;
@@ -24,8 +24,6 @@ public class Sach {
         this.tensach = tensach;
         this.namxb = namxb;
         this.soluong = soluong;
-        this.tinhtrang = tinhtrang;
-        this.mota = mota;
         this.mann = mann;
         this.mavitri = mavitri;
 }
@@ -73,21 +71,6 @@ public class Sach {
         this.tensach = tensach;
     }
 
-    public String getTinhtrang() {
-        return tinhtrang;
-    }
-
-    public void setTinhtrang(String tinhtrang) {
-        this.tinhtrang = tinhtrang;
-    }
-
-    public String getMota() {
-        return mota;
-    }
-
-    public void setMota(String mota) {
-        this.mota = mota;
-    }
 
     public String getMann() {
         return mann;
@@ -121,8 +104,6 @@ public class Sach {
         this.soluong = soluong;
     }
 
-    
-    
-    
+     
 }    
     

@@ -92,19 +92,18 @@ public class TacGiaDAO {
     }
 
     public String taoMaTGMoi() {
-        // DB bạn đang có TG01..TG06 (2 số). Mình tạo theo format TG%02d
         String sql = "SELECT MaTG FROM tacgia ORDER BY MaTG DESC LIMIT 1";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
-            if (!rs.next()) return "TG01";
-            String maCu = rs.getString("MaTG"); // TG06
+            if (!rs.next()) return "TG001";
+            String maCu = rs.getString("MaTG"); 
             int so = Integer.parseInt(maCu.substring(2));
             so++;
-            return String.format("TG%02d", so);
+            return String.format("TG%03d", so);
         } catch (Exception e) { e.printStackTrace(); }
-        return "TG01";
+        return "TG001";
     }
 
     public List<String> getAllGioiTinh() {

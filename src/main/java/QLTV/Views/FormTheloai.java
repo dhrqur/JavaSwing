@@ -141,9 +141,6 @@ public class FormTheloai extends JPanel{
         styleInput(txtMaTL);
         txtMaTL.setEditable(false);
         txtMaTL.setBackground(new Color(230, 230, 230));
-
-
-        styleInput(txtMaTL);
         styleInput(txtTenTL);
 
         return card;

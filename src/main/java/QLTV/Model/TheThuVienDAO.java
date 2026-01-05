@@ -5,15 +5,17 @@
 package QLTV.Model;
 
 import QLTV.Domain.TheThuVien;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-
 
 /**
  *
  * @author Admin
  */
+
 public class TheThuVienDAO {
 
     public List<TheThuVien> findAll() {
@@ -22,22 +24,43 @@ public class TheThuVienDAO {
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(map(rs));
+
+            while (rs.next()) {
+                list.add(new TheThuVien(
+                        rs.getString("MaThe"),
+                        rs.getString("MaDG"),
+                        rs.getDate("NgayCap"),
+                        rs.getDate("NgayHetHan"),
+                        rs.getString("TrangThai")
+                ));
+            }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+
     public List<TheThuVien> search(String keyword) {
         String sql = "SELECT MaThe, MaDG, NgayCap, NgayHetHan, TrangThai FROM thethuvien " +
                      "WHERE MaThe LIKE ? OR MaDG LIKE ? OR TrangThai LIKE ?";
-        String k = "%" + keyword + "%";
         List<TheThuVien> list = new ArrayList<>();
+        String k = "%" + keyword + "%";
+
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
+
             ps.setString(1, k);
             ps.setString(2, k);
             ps.setString(3, k);
+
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(map(rs));
+                while (rs.next()) {
+                    list.add(new TheThuVien(
+                            rs.getString("MaThe"),
+                            rs.getString("MaDG"),
+                            rs.getDate("NgayCap"),
+                            rs.getDate("NgayHetHan"),
+                            rs.getString("TrangThai")
+                    ));
+                }
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
@@ -47,6 +70,7 @@ public class TheThuVienDAO {
         String sql = "INSERT INTO thethuvien(MaThe, MaDG, NgayCap, NgayHetHan, TrangThai) VALUES(?,?,?,?,?)";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
+
             ps.setString(1, t.getMaThe());
             ps.setString(2, t.getMaDG());
             ps.setDate(3, t.getNgayCap());
@@ -61,6 +85,7 @@ public class TheThuVienDAO {
         String sql = "UPDATE thethuvien SET MaDG=?, NgayCap=?, NgayHetHan=?, TrangThai=? WHERE MaThe=?";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
+
             ps.setString(1, t.getMaDG());
             ps.setDate(2, t.getNgayCap());
             ps.setDate(3, t.getNgayHetHan());
@@ -81,7 +106,6 @@ public class TheThuVienDAO {
         return 0;
     }
 
-    // ===== mã tự tăng =====
     public String taoMaTheMoi() {
         String sql = "SELECT MaThe FROM thethuvien ORDER BY MaThe DESC LIMIT 1";
         try (Connection con = DBConnection.getConnection();
@@ -89,7 +113,7 @@ public class TheThuVienDAO {
              ResultSet rs = ps.executeQuery()) {
 
             if (!rs.next()) return "TTV001";
-            String maCu = rs.getString("MaThe"); // TTV005
+            String maCu = rs.getString("MaThe"); // TTV001
             int so = Integer.parseInt(maCu.substring(3));
             so++;
             return String.format("TTV%03d", so);
@@ -98,7 +122,6 @@ public class TheThuVienDAO {
         return "TTV001";
     }
 
-    // ===== check trùng =====
     public boolean existsMaThe(String maThe) {
         String sql = "SELECT 1 FROM thethuvien WHERE MaThe=? LIMIT 1";
         try (Connection con = DBConnection.getConnection();
@@ -109,7 +132,7 @@ public class TheThuVienDAO {
         return false;
     }
 
-    // 1 độc giả chỉ có 1 thẻ (nếu bạn muốn luật này)
+    // 1 DG chỉ 1 thẻ
     public boolean existsMaDG(String maDG, String excludeMaThe) {
         String sql = "SELECT 1 FROM thethuvien WHERE MaDG=? AND MaThe<>? LIMIT 1";
         try (Connection con = DBConnection.getConnection();
@@ -120,15 +143,4 @@ public class TheThuVienDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
-
-    private TheThuVien map(ResultSet rs) throws Exception {
-        return new TheThuVien(
-                rs.getString("MaThe"),
-                rs.getString("MaDG"),
-                rs.getDate("NgayCap"),
-                rs.getDate("NgayHetHan"),
-                rs.getString("TrangThai")
-        );
-    }
 }
-

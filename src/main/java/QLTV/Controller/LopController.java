@@ -4,6 +4,7 @@
  */
 package QLTV.Controller;
 
+import QLTV.Domain.Khoa;
 import QLTV.Domain.Lop;
 import QLTV.Model.KhoaDAO;
 import QLTV.Model.LopDAO;
@@ -11,6 +12,7 @@ import QLTV.Views.FormLop;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.List;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -33,13 +35,26 @@ public class LopController {
 
         view.setMaLop(dao.taoMaLopMoi());
     }
-
     private void initKhoaCombo() {
-        view.getCboMaKhoa().removeAllItems();
-        List<String> maKhoas = khoaDAO.findAllMaKhoa();
-        for (String mk : maKhoas) view.getCboMaKhoa().addItem(mk);
+        view.getCboKhoa().removeAllItems();
+        for (Khoa k : khoaDAO.findAll()) {
+            view.getCboKhoa().addItem(k);
+        }
     }
 
+    private Lop readForm() {
+        Khoa k = (Khoa) view.getCboKhoa().getSelectedItem();
+        if (k == null) {
+            JOptionPane.showMessageDialog(view, "Chọn khoa!");
+            return null;
+        }
+
+        String maKhoa = k.getMaKhoa();
+        String maLop = view.getMaLop();
+        String tenLop = view.getTenLop();
+
+        return new Lop(maLop, tenLop,maKhoa);
+    }
     private void registerEvents() {
         view.getBtnThem().addActionListener(e -> handleInsert());
         view.getBtnSua().addActionListener(e -> handleUpdate());
@@ -169,83 +184,154 @@ public class LopController {
 
     private void fillFormFromSelectedRow() {
         int row = view.getTblLop().getSelectedRow();
-        if (row < 0) return;
+            if (row < 0) return;
 
         DefaultTableModel m = view.getModel();
-        view.setForm(
-                String.valueOf(m.getValueAt(row, 0)),
-                String.valueOf(m.getValueAt(row, 1)),
-                String.valueOf(m.getValueAt(row, 2))
-        );
+        String maLop = m.getValueAt(row, 0).toString();
+        String tenLop = m.getValueAt(row, 1).toString();
+        String maKhoa = m.getValueAt(row, 2).toString();
+
+
+        setSelectedKhoa(maKhoa);
+        view.setForm(maLop, tenLop);
     }
 
     private void importCSVToTable() {
-    JFileChooser fc = new JFileChooser();
-    if (fc.showOpenDialog(view) != JFileChooser.APPROVE_OPTION) return;
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Chọn file CSV Lớp");
 
-    List<Lop> dbList = dao.findAll();
+        if (fc.showOpenDialog(view) != JFileChooser.APPROVE_OPTION) return;
 
-    int insert = 0, skip = 0, dup = 0;
+        int readCount = 0;
+        int insertCount = 0;
+        int skipCount = 0;
+        int dupCount = 0;
 
-    try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
-        String line;
-        boolean header = true;
+        // Load DB hiện tại
+        List<Lop> dbList = dao.findAll();
 
-        while ((line = br.readLine()) != null) {
-            if (header) { header = false; continue; }
-            if (line.trim().isEmpty()) continue;
-
-            String[] p = line.split(",", -1);
-            if (p.length < 3) continue;
-
-            String ma = p[0].trim();
-            String ten = p[1].trim();
-            String maKhoa = p[2].trim();
-
-            if (ma.isEmpty() || ten.isEmpty() || maKhoa.isEmpty()) continue;
-
-            boolean same = false, dupMa = false, dupTen = false;
-
-            for (Lop l : dbList) {
-                if (l.getMaLop().equals(ma)
-                 && l.getTenLop().equals(ten)
-                 && l.getMaKhoa().equals(maKhoa)) {
-                    same = true; break;      
-                }
-                if (l.getMaLop().equals(ma)) dupMa = true;
-                if (l.getTenLop().equals(ten)) dupTen = true;
-            }
-
-            if (same) { skip++; continue; }
-       
-                if (dupMa || dupTen || dao.checkTrungTenLop(ten)) {
-                    dup++;
-                    continue;
-                }
-
-
-            Lop lop = new Lop(ma, ten, maKhoa);
-            dao.insert(lop);
-            dbList.add(lop);
-            insert++;
+        // Set để check trùng nhanh (O(1))
+        java.util.HashSet<String> existedMa = new java.util.HashSet<>();
+        java.util.HashSet<String> existedTen = new java.util.HashSet<>();
+        for (Lop l : dbList) {
+            if (l.getMaLop() != null) existedMa.add(l.getMaLop().trim());
+            if (l.getTenLop() != null) existedTen.add(l.getTenLop().trim());
         }
 
-        loadTable();
-        view.clearForm();
-        view.setMaLop(dao.taoMaLopMoi());
+        // FK: MaKhoa phải tồn tại
+        java.util.HashSet<String> validMaKhoa = new java.util.HashSet<>();
+        for (Khoa k : khoaDAO.findAll()) {
+            validMaKhoa.add(k.getMaKhoa());
+        }
 
-        JOptionPane.showMessageDialog(
-            view,
-            "Import xong!\n"
-          + "Thêm: " + insert + "\n"
-          + "Bỏ qua: " + skip + "\n"
-          + "Trùng: " + dup
-        );
+        // Trùng trong chính file CSV (không phải DB)
+        java.util.HashSet<String> seenMaInFile = new java.util.HashSet<>();
+        java.util.HashSet<String> seenTenInFile = new java.util.HashSet<>();
 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(view, "Lỗi nhập file!");
+        try (BufferedReader br = new BufferedReader(new FileReader(fc.getSelectedFile()))) {
+            String line;
+
+            // bỏ header
+            br.readLine();
+
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] p = line.split(",", -1);
+                if (p.length < 3) { skipCount++; continue; }
+
+                try {
+                    String ma = p[0].trim();
+                    String ten = p[1].trim();
+                    String maKhoa = p[2].trim();
+
+                    // validate bắt buộc
+                    if (ma.isEmpty() || ten.isEmpty() || maKhoa.isEmpty()) {
+                        skipCount++;
+                        continue;
+                    }
+
+                    // check FK MaKhoa
+                    if (!validMaKhoa.contains(maKhoa)) {
+                        JOptionPane.showMessageDialog(
+                                view,
+                                "MaKhoa không tồn tại (FK) ở dòng:\n" + line,
+                                "IMPORT THẤT BẠI",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+                        return;
+                    }
+
+                    // trùng trong file
+                    if (seenMaInFile.contains(ma) || seenTenInFile.contains(ten)) {
+                        dupCount++;
+                        continue;
+                    }
+
+                    // trùng với DB
+                    if (existedMa.contains(ma) || existedTen.contains(ten) || dao.checkTrungTenLop(ten)) {
+                        dupCount++;
+                        continue;
+                    }
+
+                    Lop lop = new Lop(ma, ten, maKhoa);
+
+                    int ok = dao.insert(lop);
+                    readCount++;
+
+                    if (ok > 0) {
+                        insertCount++;
+
+                        // update set + list để các dòng sau check trùng
+                        existedMa.add(ma);
+                        existedTen.add(ten);
+                        seenMaInFile.add(ma);
+                        seenTenInFile.add(ten);
+                        dbList.add(lop);
+                    } else {
+                        JOptionPane.showMessageDialog(
+                                view,
+                                "Không lưu được DB ở dòng:\n" + line,
+                                "IMPORT THẤT BẠI",
+                                JOptionPane.ERROR_MESSAGE
+                        );
+                        return;
+                    }
+
+                } catch (Exception exRow) {
+                    exRow.printStackTrace();
+                    JOptionPane.showMessageDialog(
+                            view,
+                            "Sai định dạng dữ liệu ở dòng:\n" + line + "\n\nChi tiết:\n" + exRow.getMessage(),
+                            "IMPORT THẤT BẠI",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+            }
+
+            loadTable();
+            view.clearForm();
+            initKhoaCombo();
+            view.setMaLop(dao.taoMaLopMoi());
+
+            JOptionPane.showMessageDialog(
+                    view,
+                    "Import xong!\n"
+                            + "Đọc hợp lệ: " + readCount + "\n"
+                            + "Đã lưu DB: " + insertCount + "\n"
+                            + "Bỏ qua: " + skipCount + "\n"
+                            + "Trùng: " + dupCount,
+                    "OK",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(view, "Nhập CSV thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
-}
+
 
 
     private void exportTableToCSV() {
@@ -293,6 +379,15 @@ public class LopController {
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(view, "Xuất CSV thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    private void setSelectedKhoa(String maKhoa) {
+    JComboBox<Khoa> cbo = view.getCboKhoa();
+        for (int i = 0; i < cbo.getItemCount(); i++) {
+            if (cbo.getItemAt(i).getMaKhoa().equals(maKhoa)) {
+                cbo.setSelectedIndex(i);
+                break;
+            }
         }
     }
 }

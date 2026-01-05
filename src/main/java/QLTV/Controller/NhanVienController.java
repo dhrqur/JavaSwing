@@ -98,7 +98,7 @@ public class NhanVienController {
         String gt = view.getGioiTinh();
         String vt = view.getVaiTro();
         String email = view.getEmail();
-        String sdt = view.getSdt(); // BẮT BUỘC
+        String sdt = view.getSdt();
 
         if (ten.isEmpty() || que.isEmpty() || gt.isEmpty() || vt.isEmpty() || email.isEmpty() || sdt.isEmpty()) {
             JOptionPane.showMessageDialog(view, "Không được để trống!");
@@ -124,6 +124,12 @@ public class NhanVienController {
 
         NhanVien nv = readForm(ma);
         if (nv == null) return;
+        
+        String ten = view.getTenNV();
+        if (!ten.isEmpty() && dao.checkTrungTenNV(ten)) {
+            JOptionPane.showMessageDialog(view, "Tên nhân viên đã tồn tại!");
+            return;
+        }
 
         if (dao.existsEmail(nv.getEmail(), "")) {
             JOptionPane.showMessageDialog(view, "Email đã tồn tại!");
@@ -149,6 +155,12 @@ public class NhanVienController {
         String ma = view.getMaNV();
         if (ma.isEmpty()) {
             JOptionPane.showMessageDialog(view, "Chọn 1 dòng để sửa!");
+            return;
+        }
+        
+        String ten = view.getTenNV();
+        if (!ten.isEmpty() && dao.checkTrungTenNVKhacMa(ten, ma)) {
+            JOptionPane.showMessageDialog(view, "Tên nhân viên đã tồn tại!");
             return;
         }
 
@@ -225,14 +237,12 @@ public class NhanVienController {
                 String email = p[5].trim();
                 String sdt = p[6].trim();
 
-                // bắt trống (SĐT bắt buộc)
                 if (ma.isEmpty() || ten.isEmpty() || que.isEmpty() || gt.isEmpty() || vt.isEmpty()
                         || email.isEmpty() || sdt.isEmpty()) {
                     skip++;
                     continue;
                 }
 
-                // validate
                 if (!Pattern.matches("^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$", email)) { skip++; continue; }
                 if (!Pattern.matches("^\\d{10,11}$", sdt)) { skip++; continue; }
 
@@ -240,7 +250,7 @@ public class NhanVienController {
 
                 for (NhanVien nv : dbList) {
                     if (nv.getMaNV().equals(ma) && nv.getEmail().equals(email) && nv.getSdt().equals(sdt)) {
-                        same = true; break; // y hệt
+                        same = true; break; 
                     }
                     if (nv.getMaNV().equals(ma)) dupMa = true;
                 }

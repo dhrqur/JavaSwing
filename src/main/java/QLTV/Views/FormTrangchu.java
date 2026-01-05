@@ -85,6 +85,8 @@ public class FormTrangchu extends JFrame {
         JButton btnTheLoai = menuButton("Quản lý Thể Loại");
         JButton btnTacGia = menuButton("Quản lý Tác Giả");
         JButton btnNXB = menuButton("Quản lý Nhà Xuất Bản");
+        JButton btnNgonNgu = menuButton("Quản lý Ngôn Ngữ Sách");
+
         JButton btnDocGia = menuButton("Quản lý Độc Giả");
         JButton btnNhanVien = menuButton("Quản lý Nhân Viên");
         JButton btnMuonTra = menuButton("Quản lý Mượn Trả");
@@ -98,6 +100,8 @@ public class FormTrangchu extends JFrame {
         btnPanel.add(btnTheLoai);
         btnPanel.add(btnTacGia);
         btnPanel.add(btnNXB);
+        btnPanel.add(btnNgonNgu);
+
         btnPanel.add(btnDocGia);
         btnPanel.add(btnNhanVien);
         btnPanel.add(btnMuonTra);
@@ -142,6 +146,16 @@ public class FormTrangchu extends JFrame {
 
             FormNXB p = new FormNXB();
             new QLTV.Controller.NhaXuatBanController(p);
+
+            pnlContent.add(p, BorderLayout.CENTER);
+            pnlContent.revalidate();
+            pnlContent.repaint();
+        });
+        btnNgonNgu.addActionListener(e -> {
+            pnlContent.removeAll();
+
+            FormNgonNgu p = new FormNgonNgu();
+            new QLTV.Controller.NgonNguController(p);
 
             pnlContent.add(p, BorderLayout.CENTER);
             pnlContent.revalidate();

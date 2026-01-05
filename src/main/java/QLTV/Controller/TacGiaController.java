@@ -26,8 +26,6 @@ public class TacGiaController {
     public TacGiaController(FormTacGia view) {
         this.view = view;
         registerEvents();
-
-        loadComboboxFromDB();
         loadTable();
 
         view.setMaTG(dao.taoMaTGMoi());
@@ -39,7 +37,6 @@ public class TacGiaController {
         view.getBtnXoa().addActionListener(e -> handleDelete());
         view.getBtnLamMoi().addActionListener(e -> {
             view.clearForm();
-            loadComboboxFromDB();
             view.setMaTG(dao.taoMaTGMoi());
         });
 
@@ -54,9 +51,6 @@ public class TacGiaController {
         });
     }
 
-    private void loadComboboxFromDB() {
-        view.setComboboxItems(dao.getAllGioiTinh(), dao.getAllQuocTich());
-    }
 
     private void loadTable() {
         fillTable(dao.findAll());
@@ -93,7 +87,6 @@ public class TacGiaController {
         if (ok > 0) {
             JOptionPane.showMessageDialog(view, "Thêm tác giả thành công!");
             loadTable();
-            loadComboboxFromDB();
             view.clearForm();
             view.setMaTG(dao.taoMaTGMoi());
         } else {
@@ -116,7 +109,6 @@ public class TacGiaController {
         if (ok > 0) {
             JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
             loadTable();
-            loadComboboxFromDB();
         } else {
             JOptionPane.showMessageDialog(view, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -139,7 +131,7 @@ public class TacGiaController {
         if (ok > 0) {
             JOptionPane.showMessageDialog(view, "Xóa thành công!");
             loadTable();
-            loadComboboxFromDB();
+
             view.clearForm();
             view.setMaTG(dao.taoMaTGMoi());
         } else {

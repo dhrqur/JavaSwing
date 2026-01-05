@@ -1,30 +1,29 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package QLTV.Views;
+
+import QLTV.Domain.KeSach;
+import QLTV.Domain.NgonNgu;
+import QLTV.Domain.NhaXuatBan;
+import QLTV.Domain.TacGia;
+import QLTV.Domain.Theloai;
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
-
-/**
- *
- * @author dinhd
- */
 public class FormSach extends JPanel {
+
     private JTextField txtSearch = new JTextField();
     private JButton btnSearch = new JButton("Tìm");
 
     private JTextField txtMaSach = new JTextField();
     private JTextField txtTenSach = new JTextField();
 
-    // ===== ĐỔI 3 FIELD NÀY THÀNH COMBOBOX =====
-    private JComboBox<String> cboTacGia = new JComboBox<>();
-    private JComboBox<String> cboTheLoai = new JComboBox<>();
-    private JComboBox<String> cboNXB = new JComboBox<>();
+    private JComboBox<TacGia> cboTacGia = new JComboBox<>();
+    private JComboBox<Theloai> cboTheLoai = new JComboBox<>();
+    private JComboBox<NhaXuatBan> cboNXB = new JComboBox<>();
+    private JComboBox<NgonNgu> cboNgonNgu = new JComboBox<>();
+    private JComboBox<KeSach> cboViTri = new JComboBox<>();
 
     private JTextField txtNamXB = new JTextField();
     private JTextField txtSoLuong = new JTextField();
@@ -94,7 +93,7 @@ public class FormSach extends JPanel {
         JPanel card = new RoundedPanel(18);
         card.setBackground(Color.WHITE);
         card.setLayout(new BorderLayout());
-        card.setPreferredSize(new Dimension(360, 0));
+        card.setPreferredSize(new Dimension(380, 0));
         card.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         JLabel lb = new JLabel("Thông tin sách");
@@ -115,6 +114,8 @@ public class FormSach extends JPanel {
         r = addRow(form, gbc, r, "Tác giả", cboTacGia);
         r = addRow(form, gbc, r, "Thể loại", cboTheLoai);
         r = addRow(form, gbc, r, "Nhà xuất bản", cboNXB);
+        r = addRow(form, gbc, r, "Ngôn ngữ", cboNgonNgu);
+        r = addRow(form, gbc, r, "Vị trí (kệ)", cboViTri);
         r = addRow(form, gbc, r, "Năm XB", txtNamXB);
         r = addRow(form, gbc, r, "Số lượng", txtSoLuong);
 
@@ -157,13 +158,14 @@ public class FormSach extends JPanel {
         txtMaSach.setBackground(new Color(230, 230, 230));
 
         styleInput(txtTenSach);
+        styleInput(txtNamXB);
+        styleInput(txtSoLuong);
 
         styleCombo(cboTacGia);
         styleCombo(cboTheLoai);
         styleCombo(cboNXB);
-
-        styleInput(txtNamXB);
-        styleInput(txtSoLuong);
+        styleCombo(cboNgonNgu);
+        styleCombo(cboViTri);
 
         return card;
     }
@@ -171,11 +173,8 @@ public class FormSach extends JPanel {
     private int addRow(JPanel form, GridBagConstraints gbc, int row, String text, JComponent field) {
         JLabel lb = new JLabel(text);
         lb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lb.setAlignmentX(Component.LEFT_ALIGNMENT);
-
         gbc.gridx = 0;
         gbc.gridy = row;
-        gbc.weightx = 1;
         form.add(lb, gbc);
 
         gbc.gridy = row + 1;
@@ -194,7 +193,27 @@ public class FormSach extends JPanel {
         lb.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lb.setForeground(new Color(30, 50, 90));
 
-        String[] cols = {"Mã sách", "Tên sách", "Tác giả", "Thể loại", "NXB", "Năm XB", "Số lượng"};
+        // ✅ Cột HIỂN THỊ TÊN, nhưng vẫn giữ MÃ ở cột ẩn để CRUD/ chọn dòng hoạt động
+        // Index cột trong model:
+        // 0 MaSach
+        // 1 TenSach
+        // 2 MaTG (ẩn)     3 TenTG (hiện)
+        // 4 MaTL (ẩn)     5 TenTL (hiện)
+        // 6 MaNXB (ẩn)    7 TenNXB (hiện)
+        // 8 MaNN (ẩn)     9 TenNN (hiện)
+        // 10 MaViTri (ẩn) 11 TenKe (hiện)
+        // 12 NamXB
+        // 13 SoLuong
+        String[] cols = {
+                "Mã sách", "Tên sách",
+                "MaTG", "Tác giả",
+                "MaTL", "Thể loại",
+                "MaNXB", "Nhà XB",
+                "MaNN", "Ngôn ngữ",
+                "MaVT", "Vị trí",
+                "Năm XB", "Số lượng"
+        };
+
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
@@ -204,6 +223,13 @@ public class FormSach extends JPanel {
         tblSach.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         tblSach.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         tblSach.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // ✅ Ẩn các cột mã (MaTG, MaTL, MaNXB, MaNN, MaVT)
+        hideColumn(2);
+        hideColumn(4);
+        hideColumn(6);
+        hideColumn(8);
+        hideColumn(10);
 
         JScrollPane sp = new JScrollPane(tblSach);
         sp.setBorder(BorderFactory.createLineBorder(new Color(220, 230, 240)));
@@ -219,6 +245,16 @@ public class FormSach extends JPanel {
         return card;
     }
 
+    private void hideColumn(int modelIndex) {
+        // modelIndex == index trong model
+        int viewIndex = tblSach.convertColumnIndexToView(modelIndex);
+        if (viewIndex >= 0) {
+            tblSach.getColumnModel().getColumn(viewIndex).setMinWidth(0);
+            tblSach.getColumnModel().getColumn(viewIndex).setMaxWidth(0);
+            tblSach.getColumnModel().getColumn(viewIndex).setWidth(0);
+        }
+    }
+
     private void styleInput(JTextField f) {
         f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         f.setPreferredSize(new Dimension(0, 36));
@@ -229,7 +265,7 @@ public class FormSach extends JPanel {
         f.setBackground(new Color(250, 252, 255));
     }
 
-    private void styleCombo(JComboBox<String> c) {
+    private void styleCombo(JComboBox<?> c) {
         c.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         c.setPreferredSize(new Dimension(0, 36));
         c.setBorder(BorderFactory.createLineBorder(new Color(210, 220, 230), 1, true));
@@ -303,32 +339,43 @@ public class FormSach extends JPanel {
     public JTextField getTxtSearch() { return txtSearch; }
     public JButton getBtnSearch() { return btnSearch; }
 
-    // ===== cbo getters để controller đổ dữ liệu =====
-    public JComboBox<String> getCboTacGia() { return cboTacGia; }
-    public JComboBox<String> getCboTheLoai() { return cboTheLoai; }
-    public JComboBox<String> getCboNXB() { return cboNXB; }
+    public JComboBox<TacGia> getCboTacGia() { return cboTacGia; }
+    public JComboBox<Theloai> getCboTheLoai() { return cboTheLoai; }
+    public JComboBox<NhaXuatBan> getCboNXB() { return cboNXB; }
+    public JComboBox<NgonNgu> getCboNgonNgu() { return cboNgonNgu; }
+    public JComboBox<KeSach> getCboViTri() { return cboViTri; }
 
     public String getMaSach() { return txtMaSach.getText().trim(); }
     public String getTenSach() { return txtTenSach.getText().trim(); }
 
-    // Lấy mã FK từ combo
     public String getTacGia() {
-        Object o = cboTacGia.getSelectedItem();
-        return o == null ? "" : o.toString().trim();
+        TacGia tg = (TacGia) cboTacGia.getSelectedItem();
+        return tg == null ? "" : tg.getMaTG();
     }
     public String getTheLoai() {
-        Object o = cboTheLoai.getSelectedItem();
-        return o == null ? "" : o.toString().trim();
+        Theloai tl = (Theloai) cboTheLoai.getSelectedItem();
+        return tl == null ? "" : tl.getMaTL();
     }
     public String getNXB() {
-        Object o = cboNXB.getSelectedItem();
-        return o == null ? "" : o.toString().trim();
+        NhaXuatBan nxb = (NhaXuatBan) cboNXB.getSelectedItem();
+        return nxb == null ? "" : nxb.getMaNXB();
+    }
+    public String getMaNN() {
+        NgonNgu nn = (NgonNgu) cboNgonNgu.getSelectedItem();
+        return nn == null ? "" : nn.getMaNN();
+    }
+    public String getMaViTri() {
+        KeSach ks = (KeSach) cboViTri.getSelectedItem();
+        return ks == null ? "" : ks.getMaViTri();
     }
 
     public String getNamXB() { return txtNamXB.getText().trim(); }
     public String getSoLuong() { return txtSoLuong.getText().trim(); }
 
     public void setMaSach(String ma) { txtMaSach.setText(ma); }
+    public void setTenSach(String s) { txtTenSach.setText(s); }
+    public void setNamXB(String s) { txtNamXB.setText(s); }
+    public void setSoLuong(String s) { txtSoLuong.setText(s); }
 
     public void clearForm() {
         txtMaSach.setText("");
@@ -339,17 +386,7 @@ public class FormSach extends JPanel {
         if (cboTacGia.getItemCount() > 0) cboTacGia.setSelectedIndex(0);
         if (cboTheLoai.getItemCount() > 0) cboTheLoai.setSelectedIndex(0);
         if (cboNXB.getItemCount() > 0) cboNXB.setSelectedIndex(0);
-    }
-
-    public void setForm(String ma, String ten, String tg, String tl, String nxb, String nam, String sl) {
-        txtMaSach.setText(ma);
-        txtTenSach.setText(ten);
-
-        cboTacGia.setSelectedItem(tg);
-        cboTheLoai.setSelectedItem(tl);
-        cboNXB.setSelectedItem(nxb);
-
-        txtNamXB.setText(nam);
-        txtSoLuong.setText(sl);
+        if (cboNgonNgu.getItemCount() > 0) cboNgonNgu.setSelectedIndex(0);
+        if (cboViTri.getItemCount() > 0) cboViTri.setSelectedIndex(0);
     }
 }
